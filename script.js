@@ -1,7 +1,47 @@
 const API_BASE = window.JOGO_ALEX_API_BASE || 'http://localhost:4000';
+const isHostedDemo = window.location.hostname !== 'localhost' && !window.JOGO_ALEX_API_BASE;
 let appSession = null;
 let authenticatedUser = null;
 let authMode = 'login';
+
+function formatCurrency(value) {
+  return `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function getDemoAccounts() {
+  return JSON.parse(localStorage.getItem('jogo-alex-demo-accounts') || '[]');
+}
+
+function saveDemoAccounts(accounts) {
+  localStorage.setItem('jogo-alex-demo-accounts', JSON.stringify(accounts));
+}
+
+function applyAuthenticatedUser(user) {
+  authenticatedUser = user;
+  document.body.classList.add('is-authenticated');
+  const userBalance = document.querySelector('#userPanel .user-balance strong');
+  if (userBalance) userBalance.textContent = formatCurrency(user.balance || 0);
+  const userPanel = document.getElementById('userPanel');
+  if (userPanel) userPanel.setAttribute('title', user.name || user.email || 'Jogador');
+}
+
+function authenticateHostedDemo({ email, password, name }) {
+  const accounts = getDemoAccounts();
+  let account = accounts.find((item) => item.email === email);
+
+  if (authMode === 'register') {
+    if (account) throw new Error('Já existe uma conta demo com este acesso. Entre para continuar.');
+    account = { email, name, password, balance: 250, role: 'player' };
+    accounts.push(account);
+    saveDemoAccounts(accounts);
+  } else if (!account || account.password !== password) {
+    throw new Error('Conta demo não encontrada ou senha incorreta. Crie uma conta para continuar.');
+  }
+
+  localStorage.setItem('jogo-alex-demo-session', JSON.stringify(account));
+  applyAuthenticatedUser(account);
+  return account;
+}
 
 function normalizeIdentifierToEmail(value) {
   const candidate = String(value || '').trim();
@@ -334,16 +374,7 @@ async function loadAuthenticatedState() {
     const balance = walletData?.data?.balance ?? 0;
     authenticatedUser = profileData?.user || null;
 
-    document.body.classList.add('is-authenticated');
-    const userBalance = document.querySelector('#userPanel .user-balance strong');
-    if (userBalance) {
-      userBalance.textContent = `R$ ${Number(balance).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
-
-    const userPanel = document.getElementById('userPanel');
-    if (userPanel) {
-      userPanel.setAttribute('title', userName);
-    }
+    applyAuthenticatedUser({ ...profileData.user, name: userName, balance });
 
     const formName = document.querySelector('#loginModal h2');
     if (formName) {
@@ -373,6 +404,16 @@ async function authenticate() {
 
   if (!email) {
     loginError.textContent = 'Use um telefone válido ou um e-mail real para autenticar.';
+    return;
+  }
+
+  if (isHostedDemo) {
+    try {
+      authenticateHostedDemo({ email, password, name });
+      closeLogin();
+    } catch (error) {
+      loginError.textContent = error.message;
+    }
     return;
   }
 
@@ -437,7 +478,7 @@ document.addEventListener('click', (event) => {
   if (action === 'demoDeposit') {
     const amountInput = drawerContent.querySelector('input[type="number"]');
     const amount = Number(amountInput?.value || 0);
-    if (!appSession?.access_token) {
+    if (!appSession?.access_token && !isHostedDemo) {
       window.alert('Entre na conta para simular um crédito na carteira.');
       return;
     }
@@ -445,18 +486,30 @@ document.addEventListener('click', (event) => {
       window.alert('Informe um valor maior que zero.');
       return;
     }
-    apiRequest('/wallet/deposit', {
-      method: 'POST',
-      body: JSON.stringify({ amount })
-    }).then((response) => {
+    const applyDemoDeposit = (response) => {
       const formattedAmount = Number(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
       activities.unshift({ icon: '💳', title: 'Crédito simulado', detail: 'Registrado na carteira demo', time: 'Agora', amount: `+ R$ ${formattedAmount}` });
       renderActivity();
       const balance = response?.balance ?? response?.wallet?.balance ?? 0;
+      authenticatedUser.balance = Number(balance);
       const userBalance = document.querySelector('#userPanel .user-balance strong');
-      if (userBalance) userBalance.textContent = `R$ ${Number(balance).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (userBalance) userBalance.textContent = formatCurrency(balance);
       closeDrawer();
-    }).catch((error) => window.alert(error.message || 'Não foi possível simular o crédito.'));
+    };
+
+    if (isHostedDemo) {
+      authenticatedUser.balance = Number(authenticatedUser.balance || 0) + amount;
+      const accounts = getDemoAccounts().map((account) => account.email === authenticatedUser.email ? authenticatedUser : account);
+      saveDemoAccounts(accounts);
+      localStorage.setItem('jogo-alex-demo-session', JSON.stringify(authenticatedUser));
+      applyDemoDeposit({ balance: authenticatedUser.balance });
+      return;
+    }
+
+    apiRequest('/wallet/deposit', {
+      method: 'POST',
+      body: JSON.stringify({ amount })
+    }).then(applyDemoDeposit).catch((error) => window.alert(error.message || 'Não foi possível simular o crédito.'));
   }
   if (action === 'demoWithdraw') { activities.unshift({ icon: '↗', title: 'Saque simulado', detail: 'Nenhum dado enviado', time: 'Agora', amount: 'Aguardando gateway' }); renderActivity(); }
   if (action === 'claimOffer') activities.unshift({ icon: '🎁', title: 'Oferta reservada', detail: 'Bônus demonstrativo', time: 'Agora', amount: '+ R$ 100 fictícios' });
@@ -517,7 +570,14 @@ createTabs();
 renderGames();
 renderActivity();
 const storedSession = localStorage.getItem('jogo-alex-session');
-if (storedSession) {
+const storedDemoSession = localStorage.getItem('jogo-alex-demo-session');
+if (isHostedDemo && storedDemoSession) {
+  try {
+    applyAuthenticatedUser(JSON.parse(storedDemoSession));
+  } catch (error) {
+    localStorage.removeItem('jogo-alex-demo-session');
+  }
+} else if (storedSession) {
   try {
     appSession = JSON.parse(storedSession);
     loadAuthenticatedState();
