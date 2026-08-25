@@ -181,6 +181,10 @@
         spinButton.textContent = 'Girando...';
 
         try {
+          if (window.location.hostname !== 'localhost' && !window.JOGO_ALEX_API_BASE) {
+            throw new Error('Modo demonstração hospedado');
+          }
+
           const apiBase = window.JOGO_ALEX_API_BASE || 'http://localhost:4000';
           const response = await fetch(`${apiBase}/games/fortune-tiger/spin`, {
             method: 'POST',
