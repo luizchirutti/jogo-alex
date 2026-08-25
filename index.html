@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jogo Alex - Casino</title>
+    <meta
+      name="description"
+      content="Cópia mockada de site de cassino e jogos online com login e catálogo de jogos."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mini-action">Depósito</button>
+          <button class="mini-action">Saque</button>
+          <button class="mini-action">Ranking</button>
+          <button class="mini-action accent">Ganhe R$100 de graça</button>
+        </div>
+        <div class="topbar-right">
+          <button class="mini-action">Mensagem</button>
+          <button class="mini-action">Adicionar à tela inicial</button>
+          <button class="mini-action">Suporte ao vivo</button>
+        </div>
+      </header>
+
+      <div class="brand-banner">
+        <div class="brand-box">
+          <div class="brand-mark">J</div>
+          <div class="brand-text">
+            <span class="brand-name">Jogo Alex</span>
+            <small>Casino & Jogos</small>
+          </div>
+        </div>
+        <div class="auth-actions">
+          <button class="ghost-button" id="openLogin">Entrar</button>
+          <button class="primary-button" id="openRegister">Cadastre-se</button>
+        </div>
+        <div class="user-panel" id="userPanel">
+          <div class="user-balance">
+            <span>Saldo</span>
+            <strong>R$ 2.480,90</strong>
+          </div>
+          <div class="user-actions">
+            <button class="mini-action">Depósito</button>
+            <button class="mini-action">Saque</button>
+            <button class="mini-action">Minha conta</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-notice">
+        <span class="demo-dot"></span>
+        Ambiente de demonstração · saldo, jogos e transações são fictícios
+      </div>
+
+      <nav class="main-nav" aria-label="Navegação principal">
+        <button class="nav-link active">Home</button>
+        <button class="nav-link">Esportes</button>
+        <button class="nav-link">Casino</button>
+        <button class="nav-link">Ao vivo</button>
+        <button class="nav-link">Promoções</button>
+        <button class="nav-link">Suporte</button>
+      </nav>
+
+      <main class="content">
+        <div class="ticker-wrap">
+          <div class="ticker-track">
+            <span>8*****06 acabou de retirar 195,00 R$</span>
+            <span>3*****52 acabou de retirar 498,00 R$</span>
+            <span>6*****92 acabou de retirar 498,00 R$</span>
+            <span>5*****24 acabou de retirar 1.364,00 R$</span>
+            <span>5*****87 acabou de retirar 195,00 R$</span>
+            <span>5*****08 acabou de retirar 9.876,00 R$</span>
+            <span>9*****43 acabou de retirar 944,00 R$</span>
+            <span>4*****18 acabou de retirar 2.116,00 R$</span>
+            <span>6*****95 acabou de retirar 195,00 R$</span>
+            <span>1*****34 acabou de retirar 195,00 R$</span>
+          </div>
+        </div>
+
+        <section class="provider-panel">
+          <div class="provider-header">
+            <div class="provider-tabs" id="providerTabs"></div>
+          </div>
+
+          <div class="section-block active" id="sectionQuente">
+            <div class="section-title-row">
+              <div class="section-title"><span class="icon">🔥</span> Quente</div>
+              <div class="carousel-controls">
+                <button class="nav-btn" aria-label="Anterior">‹</button>
+                <button class="nav-btn" aria-label="Próximo">›</button>
+              </div>
+            </div>
+            <div class="game-grid" id="gamesQuente"></div>
+          </div>
+
+          <div class="section-block" id="sectionNovo">
+            <div class="section-title-row">
+              <div class="section-title"><span class="icon">✨</span> Novo</div>
+              <div class="carousel-controls">
+                <button class="nav-btn" aria-label="Anterior">‹</button>
+                <button class="nav-btn" aria-label="Próximo">›</button>
+              </div>
+            </div>
+            <div class="game-grid" id="gamesNovo"></div>
+          </div>
+
+          <div class="section-block" id="sectionPG">
+            <div class="section-title-row">
+              <div class="section-title"><span class="icon">🎰</span> PG</div>
+              <div class="carousel-controls">
+                <button class="nav-btn" aria-label="Anterior">‹</button>
+                <button class="nav-btn" aria-label="Próximo">›</button>
+              </div>
+            </div>
+            <div class="game-grid" id="gamesPG"></div>
+          </div>
+
+          <div class="section-block" id="sectionPP">
+            <div class="section-title-row">
+              <div class="section-title"><span class="icon">🎲</span> PP</div>
+              <div class="carousel-controls">
+                <button class="nav-btn" aria-label="Anterior">‹</button>
+                <button class="nav-btn" aria-label="Próximo">›</button>
+              </div>
+            </div>
+            <div class="game-grid" id="gamesPP"></div>
+          </div>
+        </section>
+
+        <section class="promo-panel">
+          <div class="promo-card accent">
+            <div>
+              <span class="eyebrow">Bônus</span>
+              <h3>Ganhe R$100 de graça</h3>
+            </div>
+            <button class="primary-button small">Resgatar</button>
+          </div>
+          <div class="promo-card">
+            <div>
+              <span class="eyebrow">Cashback</span>
+              <h3>Até 10% em apostas</h3>
+            </div>
+            <button class="ghost-button small">Ver regras</button>
+          </div>
+        </section>
+
+        <section class="history-panel" id="historyPanel">
+          <div class="section-title-row">
+            <div>
+              <span class="eyebrow">Área logada</span>
+              <h2 class="panel-heading">Atividade recente</h2>
+            </div>
+            <button class="ghost-button small" data-view="account">Ver carteira</button>
+          </div>
+          <div class="activity-list" id="activityList"></div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="footer-socials">
+          <button>Telegram Channel</button>
+          <button>Whatsapp Channel</button>
+        </div>
+        <p>
+          Dutch Antilles Management N.V. ... license no 365/JAZ Sub-License GLH-OCCHKTW0705152022
+        </p>
+        <ul>
+          <li>1. Este produto é para uso de usuários maiores de 18 anos e é destinado apenas para fins de entretenimento.</li>
+          <li>2. Este i7.bet contém compras no app.</li>
+          <li>3. O fato de um jogador jogar ou ganhar em um i7.bet de apostas sociais não significa que ele ganhará em apostas com dinheiro real.</li>
+        </ul>
+        <div class="copyright">Copyright © 2015 – 2026 Jogo Alex. All rights reserved.</div>
+      </footer>
+    </div>
+
+    <div class="drawer-overlay" id="drawerOverlay" aria-hidden="true">
+      <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+        <button class="close-modal" id="closeDrawer" aria-label="Fechar">×</button>
+        <span class="eyebrow" id="drawerEyebrow">Demonstração</span>
+        <h2 id="drawerTitle">Minha conta</h2>
+        <div id="drawerContent"></div>
+      </aside>
+    </div>
+
+    <div class="game-overlay" id="gameOverlay" aria-hidden="true">
+      <div class="game-modal" role="dialog" aria-modal="true" aria-labelledby="gameModalTitle">
+        <button class="close-modal" id="closeGame" aria-label="Fechar">×</button>
+        <div class="game-preview-art" id="gamePreviewArt"></div>
+        <span class="game-badge" id="gameModalBadge">Demo</span>
+        <h2 id="gameModalTitle">Jogo</h2>
+        <p class="muted-copy">Este jogo é apenas uma prévia visual. Não há apostas, prêmios ou conexão com provedores reais.</p>
+        <div class="game-stats">
+          <span>Modo: demonstração</span>
+          <span>RTP ilustrativo: 96,8%</span>
+        </div>
+        <div class="bet-strip" aria-label="Valores de aposta demo">
+          <button class="bet-option active" type="button" data-bet="5">R$5</button>
+          <button class="bet-option" type="button" data-bet="10">R$10</button>
+          <button class="bet-option" type="button" data-bet="25">R$25</button>
+          <button class="bet-option" type="button" data-bet="50">R$50</button>
+        </div>
+        <div class="game-result" id="gameResult">Pronto para girar.</div>
+        <button class="primary-button wide" id="startDemoGame">Abrir demonstração</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="loginModal" aria-hidden="true">
+      <div class="login-modal">
+        <button class="close-modal" id="closeLogin" aria-label="Fechar">×</button>
+        <div class="modal-brand">
+          <div class="brand-mark">J</div>
+          <span>Jogo Alex</span>
+        </div>
+
+        <h2 id="authTitle">Entrar</h2>
+
+        <label class="field" id="nameField" hidden>
+          <span>Nome</span>
+          <input id="nameInput" type="text" placeholder="Seu nome" />
+        </label>
+
+        <label class="field">
+          <span>Celular</span>
+          <input id="phoneInput" type="tel" placeholder="11986468935" />
+        </label>
+
+        <label class="field">
+          <span>Senha</span>
+          <input id="passwordInput" type="password" placeholder="Sua senha" />
+        </label>
+
+        <div class="form-row">
+          <label class="checkbox-wrap">
+            <input type="checkbox" checked />
+            <span>Lembrar-me</span>
+          </label>
+          <a href="#">Esqueceu a senha?</a>
+        </div>
+
+        <button class="primary-button wide" id="loginButton">Entrar</button>
+        <p class="modal-error" id="loginError"></p>
+
+        <div class="divider"><span>ou</span></div>
+        <button class="secondary-button wide" id="authModeButton">Criar uma conta</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

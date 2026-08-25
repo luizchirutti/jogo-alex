@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fortune Tiger Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              tiger: {
+                950: '#180A0A',
+                900: '#2A0B0B',
+                800: '#3F1010',
+                700: '#6B1E1E',
+                600: '#8E221B',
+                500: '#B62D2D',
+                400: '#D64024',
+                300: '#F4C451'
+              }
+            },
+            boxShadow: {
+              tiger: '0 0 18px rgba(244,196,81,0.35)'
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      body {
+        background: radial-gradient(circle at top, rgba(182,45,45,0.35), rgba(24,10,10,1) 45%);
+      }
+
+      .slot-cell {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .slot-cell.win {
+        box-shadow: 0 0 0 2px rgba(244,196,81,0.95), 0 0 18px rgba(244,196,81,0.45);
+        transform: scale(1.05);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-white antialiased">
+    <div class="mx-auto max-w-6xl px-4 py-6 md:px-8">
+      <header class="mb-6 rounded-3xl border border-red-500/30 bg-gradient-to-r from-red-950/70 via-red-900/60 to-yellow-500/20 p-4 shadow-tiger">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p class="text-xs uppercase tracking-[0.28rem] text-yellow-300/80">Prototype iGaming</p>
+            <h1 class="mt-2 text-3xl font-black text-yellow-300">Fortune Tiger</h1>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="rounded-2xl border border-yellow-400/30 bg-black/20 px-4 py-2 text-sm">
+              <span class="block text-[10px] uppercase tracking-[0.25rem] text-yellow-200/80">Saldo</span>
+              <strong id="balance" class="text-xl font-bold">R$ 250.00</strong>
+            </div>
+            <div class="rounded-2xl border border-red-400/30 bg-black/20 px-4 py-2 text-sm">
+              <span class="block text-[10px] uppercase tracking-[0.25rem] text-red-200/80">Aposta</span>
+              <strong id="betValue" class="text-xl font-bold">R$ 5.00</strong>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="grid gap-6 lg:grid-cols-[1.4fr_0.85fr]">
+        <section class="rounded-[32px] border border-red-400/20 bg-[#1d0d0d]/90 p-5 shadow-tiger">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-[0.22rem] text-yellow-200/70">Game Board</p>
+              <h2 class="text-xl font-bold">Grade 3x3</h2>
+            </div>
+            <div id="featureBadge" class="hidden rounded-full border border-yellow-300/40 bg-yellow-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18rem] text-yellow-200">
+              Respin Tiger
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 rounded-[28px] border border-yellow-500/20 bg-[#2b1212] p-4">
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="0">🍊</div>
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="1">🍊</div>
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="2">🧨</div>
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="3">💰</div>
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="4">🐯</div>
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="5">✉️</div>
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="6">🥇</div>
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="7">🗿</div>
+            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="8">🍊</div>
+          </div>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button id="decreaseBet" class="flex h-12 w-12 items-center justify-center rounded-full border border-yellow-300/40 bg-yellow-500/10 text-2xl font-bold text-yellow-200 transition hover:bg-yellow-500/20">−</button>
+            <button id="spinButton" class="flex-1 rounded-2xl bg-gradient-to-r from-red-600 via-red-500 to-yellow-400 px-6 py-3 text-lg font-black uppercase tracking-[0.24rem] text-white shadow-lg shadow-red-600/30 transition hover:brightness-110">Girar</button>
+            <button id="increaseBet" class="flex h-12 w-12 items-center justify-center rounded-full border border-yellow-300/40 bg-yellow-500/10 text-2xl font-bold text-yellow-200 transition hover:bg-yellow-500/20">+</button>
+          </div>
+        </section>
+
+        <aside class="space-y-4 rounded-[32px] border border-red-400/20 bg-[#1a0a0a]/90 p-5">
+          <div class="rounded-2xl border border-red-500/20 bg-black/20 p-4">
+            <p class="text-[10px] uppercase tracking-[0.25rem] text-yellow-200/70">Resumo da rodada</p>
+            <h3 id="roundStatus" class="mt-2 text-2xl font-black text-yellow-300">Pronto para girar</h3>
+          </div>
+
+          <div class="space-y-3 rounded-2xl border border-red-500/20 bg-black/20 p-4 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-red-100/80">Pagamento total</span>
+              <strong id="winValue" class="text-xl font-black text-emerald-300">R$ 0.00</strong>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-red-100/80">Multiplicador</span>
+              <strong id="multiplierValue" class="text-xl font-black text-yellow-300">x1</strong>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-red-100/80">Linha ativa</span>
+              <strong id="lineValue" class="text-xl font-black text-white">-</strong>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-red-500/20 bg-black/20 p-4">
+            <p class="text-[10px] uppercase tracking-[0.25rem] text-yellow-200/70">Paytable</p>
+            <div class="mt-3 space-y-2 text-sm">
+              <div class="flex items-center justify-between"><span>🍊 Tangerina</span><strong>2.5x</strong></div>
+              <div class="flex items-center justify-between"><span>🧨 Fogos</span><strong>4.5x</strong></div>
+              <div class="flex items-center justify-between"><span>✉️ Envelope</span><strong>6.5x</strong></div>
+              <div class="flex items-center justify-between"><span>💰 Moedas</span><strong>8.5x</strong></div>
+              <div class="flex items-center justify-between"><span>🗿 Jade</span><strong>11x</strong></div>
+              <div class="flex items-center justify-between"><span>🥇 Ouro</span><strong>14x</strong></div>
+              <div class="flex items-center justify-between"><span>🐯 Tiger Wild</span><strong>18x</strong></div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script type="module">
+      import FortuneTigerEngine, { PAYLINES } from './GameEngine.js';
+
+      const engine = new FortuneTigerEngine({ betAmount: 5 });
+      const cells = [...document.querySelectorAll('.slot-cell')];
+      const spinButton = document.getElementById('spinButton');
+      const increaseBet = document.getElementById('increaseBet');
+      const decreaseBet = document.getElementById('decreaseBet');
+      const betValue = document.getElementById('betValue');
+      const balance = document.getElementById('balance');
+      const winValue = document.getElementById('winValue');
+      const multiplierValue = document.getElementById('multiplierValue');
+      const roundStatus = document.getElementById('roundStatus');
+      const lineValue = document.getElementById('lineValue');
+      const featureBadge = document.getElementById('featureBadge');
+
+      let currentBet = 5;
+      let currentBalance = 250;
+
+      const renderGrid = (symbols) => {
+        cells.forEach((cell, index) => {
+          const symbol = symbols[index] || '🍊';
+          cell.textContent = symbol;
+          cell.classList.remove('win');
+        });
+      };
+
+      const renderInfo = (result) => {
+        const win = result.winAmount ?? 0;
+        multiplierValue.textContent = `x${result.multiplier ?? 1}`;
+        winValue.textContent = `R$ ${win.toFixed(2)}`;
+        roundStatus.textContent = result.featureTriggered ? 'Respin Tiger ativado' : result.isWin ? 'Vitória registrada' : 'Sem vitória';
+        featureBadge.classList.toggle('hidden', !result.featureTriggered);
+
+        const strongest = result.lines?.[0];
+        lineValue.textContent = strongest ? `${strongest.symbol.toUpperCase()} x${strongest.count}` : '-';
+      };
+
+      const setBet = (value) => {
+        currentBet = Math.min(50, Math.max(1, value));
+        betValue.textContent = `R$ ${currentBet.toFixed(2)}`;
+      };
+
+      const requestSpin = async () => {
+        spinButton.disabled = true;
+        spinButton.textContent = 'Girando...';
+
+        try {
+          const apiBase = window.JOGO_ALEX_API_BASE || 'http://localhost:4000';
+          const response = await fetch(`${apiBase}/games/fortune-tiger/spin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bet_amount: currentBet })
+          });
+
+          if (!response.ok) {
+            throw new Error('Servidor indisponível');
+          }
+
+          const payload = await response.json();
+          const result = payload.data;
+
+          renderGrid(result.symbols);
+          currentBalance = result.balance ?? currentBalance - currentBet + result.winAmount;
+          balance.textContent = `R$ ${currentBalance.toFixed(2)}`;
+          renderInfo(result);
+          const features = result.lines || [];
+          if (features.length) {
+            features.forEach(({ positions }) => {
+              positions.forEach((index) => cells[index].classList.add('win'));
+            });
+          }
+
+          if (result.fullScreen) {
+            cells.forEach((cell) => cell.classList.add('win'));
+          }
+        } catch (error) {
+          const fallback = engine.spin({ betAmount: currentBet });
+          renderGrid(fallback.symbols);
+          currentBalance = currentBalance - currentBet + fallback.winAmount;
+          balance.textContent = `R$ ${currentBalance.toFixed(2)}`;
+          renderInfo(fallback);
+          const features = fallback.lines || [];
+          if (features.length) {
+            features.forEach(({ positions }) => {
+              positions.forEach((index) => cells[index].classList.add('win'));
+            });
+          }
+
+          if (fallback.fullScreen) {
+            cells.forEach((cell) => cell.classList.add('win'));
+          }
+        } finally {
+          spinButton.disabled = false;
+          spinButton.textContent = 'Girar';
+        }
+      };
+
+      increaseBet.addEventListener('click', () => setBet(currentBet + 1));
+      decreaseBet.addEventListener('click', () => setBet(currentBet - 1));
+      spinButton.addEventListener('click', requestSpin);
+
+      setBet(currentBet);
+      renderGrid(['🍊', '🍊', '🧨', '💰', '🐯', '✉️', '🥇', '🗿', '🍊']);
+      renderInfo({ winAmount: 0, multiplier: 1, featureTriggered: false, lines: [], isWin: false });
+    </script>
+  </body>
+</html>
