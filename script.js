@@ -83,12 +83,17 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 const providerTabs = [
-  { id: 'Quente', label: 'Fortune Tiger' }
+  { id: 'Quente', label: 'Em destaque' }
 ];
 
 const sections = {
   Quente: [
-    { title: 'Fortune Tiger', badge: 'Real' }
+    { title: 'Fortune Tiger', badge: 'Demo', slug: 'fortune-tiger', rtp: '96.8%' },
+    { title: 'Neon Dice', badge: 'Novo', slug: 'neon-dice', rtp: '97.1%' },
+    { title: 'Moon Crash', badge: 'Novo', slug: 'moon-crash', rtp: '96.4%' },
+    { title: 'Gem Forge', badge: 'Demo', slug: 'gem-forge', rtp: '96.9%' },
+    { title: 'Rocket Rumble', badge: 'Demo', slug: 'rocket-rumble', rtp: '97.3%' },
+    { title: 'Lucky Lantern', badge: 'Novo', slug: 'lucky-lantern', rtp: '96.7%' }
   ]
 };
 
@@ -290,8 +295,10 @@ function closeDrawer() {
 function openGame(game) {
   gameModalTitle.textContent = game.title;
   gameModalBadge.textContent = game.badge;
-  gameResult.textContent = 'Jogo real em desenvolvimento e conectado ao backend.';
-  startDemoGameButton.textContent = 'Abrir Fortune Tiger';
+  gameResult.textContent = 'Demo pronta para explorar no navegador.';
+  startDemoGameButton.textContent = `Abrir ${game.title}`;
+  startDemoGameButton.dataset.slug = game.slug;
+  document.querySelector('.muted-copy').textContent = 'Experiência demonstrativa com saldo fictício. Nenhuma aposta ou conexão externa é realizada.';
   const selectedGradient = 'linear-gradient(135deg, rgba(251, 191, 36, 0.8), rgba(244, 63, 94, 0.72))';
   document.getElementById('gamePreviewArt').style.background = selectedGradient;
   gameOverlay.classList.add('visible');
@@ -326,10 +333,10 @@ function renderGames() {
           <article class="game-card" aria-label="${game.title}">
             <div class="game-art"></div>
             <div class="game-content">
-              <span class="game-badge">${game.badge}</span>
+                <span class="game-badge">${game.badge}</span>
               <h3 class="game-title">${game.title}</h3>
               <div class="game-meta">
-                <span>RTP 96.8%</span>
+                  <span>RTP ${game.rtp || '96.8%'}</span>
                 <span>Play</span>
               </div>
             </div>
@@ -562,7 +569,11 @@ document.querySelectorAll('.bet-option').forEach((button) => {
 });
 
 startDemoGameButton.addEventListener('click', () => {
-  window.open('http://localhost:8000/fortune-tiger.html', '_blank');
+  const slug = startDemoGameButton.dataset.slug || 'fortune-tiger';
+  const target = slug === 'fortune-tiger'
+    ? `${window.location.origin}/fortune-tiger.html`
+    : `${window.location.origin}/demo-game.html?game=${encodeURIComponent(slug)}`;
+  window.open(target, '_blank');
   gameOverlay.classList.remove('visible');
 });
 
