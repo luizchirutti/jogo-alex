@@ -26,6 +26,26 @@ function saveDemoAccounts(accounts) {
   localStorage.setItem('jogo-alex-demo-accounts', JSON.stringify(accounts));
 }
 
+function getDemoAdminUsers() {
+  return [
+    { name: 'Ana Demo', email: 'ana.demo@jogoalex.local', status: 'active', wallet: { balance: 1280.5 } },
+    { name: 'Bruno Demo', email: 'bruno.demo@jogoalex.local', status: 'active', wallet: { balance: 745.25 } },
+    { name: 'Carla Demo', email: 'carla.demo@jogoalex.local', status: 'pending', wallet: { balance: 0 } }
+  ];
+}
+
+function openHostedAdminDemo() {
+  if (!isHostedDemo) {
+    window.alert('O painel demonstrativo está disponível apenas na apresentação hospedada.');
+    return;
+  }
+
+  authenticatedUser = { name: 'Painel do investidor', email: 'admin.demo@jogoalex.local', role: 'admin', balance: 0 };
+  localStorage.setItem('jogo-alex-demo-session', JSON.stringify(authenticatedUser));
+  closeLogin();
+  openDrawer('admin');
+}
+
 function applyAuthenticatedUser(user) {
   authenticatedUser = user;
   document.body.classList.add('is-authenticated');
@@ -117,6 +137,7 @@ const nameField = document.getElementById('nameField');
 const authTitle = document.getElementById('authTitle');
 const loginError = document.getElementById('loginError');
 const authModeButton = document.getElementById('authModeButton');
+const openAdminDemo = document.getElementById('openAdminDemo');
 const openLoginBtn = document.getElementById('openLogin');
 const closeLoginBtn = document.getElementById('closeLogin');
 const openRegisterBtn = document.getElementById('openRegister');
@@ -140,6 +161,14 @@ let adminSettings = {
   vipAccess: true,
   gameBoost: 1.2
 };
+
+if (isHostedDemo) {
+  try {
+    adminSettings = { ...adminSettings, ...JSON.parse(localStorage.getItem('jogo-alex-demo-settings') || '{}') };
+  } catch (error) {
+    localStorage.removeItem('jogo-alex-demo-settings');
+  }
+}
 
 async function loadAdminSettings() {
   if (!appSession?.access_token) return;
@@ -167,6 +196,14 @@ async function loadAdminUsers() {
 }
 
 async function saveAdminSettings() {
+  if (isHostedDemo) {
+    localStorage.setItem('jogo-alex-demo-settings', JSON.stringify(adminSettings));
+    activities.unshift({ icon: '⚙️', title: 'Regras salvas', detail: 'Configuração local da demo', time: 'Agora', amount: `RTP: ${adminSettings.payoutRate}%` });
+    renderActivity();
+    window.alert('Configurações salvas apenas nesta demonstração.');
+    return;
+  }
+
   if (!appSession?.access_token) {
     window.alert('Faça login antes de salvar as regras de administração.');
     return;
@@ -266,7 +303,7 @@ function renderAdminConfig(users = []) {
       <span>VIP habilitada</span>
       <button class="switch ${adminSettings.vipAccess ? 'on' : ''}" data-toggle="vipAccess" aria-label="VIP habilitada"><span></span></button>
     </div>
-    <div class="demo-callout">Painel conectado às configurações do backend. Pagamentos e métricas financeiras ainda não estão ativos.</div>
+    <div class="demo-callout">${isHostedDemo ? 'Painel demonstrativo local: dados fictícios e configurações salvas apenas neste navegador.' : 'Painel conectado às configurações do backend. Pagamentos e métricas financeiras ainda não estão ativos.'}</div>
     <div class="admin-table-wrap"><h3>Usuários e saldos</h3><table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Saldo</th><th>Status</th></tr></thead><tbody>${userRows}</tbody></table></div>
     <button class="primary-button wide" data-action="saveAdminConfig">Salvar regras</button>
   `;
@@ -282,12 +319,13 @@ async function openDrawer(view) {
   if (view === 'admin') {
     await loadAdminSettings();
     adminUsers = await loadAdminUsers();
+    if (!adminUsers.length && isHostedDemo) adminUsers = getDemoAdminUsers();
   }
 
   const content = {
     account: {
       eyebrow: 'Carteira fictícia', title: 'Minha conta', html: `
-        <div class="balance-card"><span>Saldo disponível</span><strong>R$ 2.480,90</strong><small>Valor ilustrativo, sem movimentação real</small></div>
+        <div class="balance-card"><span>Saldo disponível</span><strong>${formatCurrency(authenticatedUser?.balance || 0)}</strong><small>Valor ilustrativo, sem movimentação real</small></div>
         <div class="drawer-actions"><button class="primary-button" data-view="deposit">Depositar</button><button class="ghost-button" data-view="withdraw">Sacar</button></div>
         <h3>Resumo</h3><div class="summary-row"><span>Bônus de demonstração</span><b>R$ 100,00</b></div><div class="summary-row"><span>Saldo utilizado</span><b>R$ 0,00</b></div>
         <button class="secondary-button wide" data-view="history">Abrir histórico</button>${authenticatedUser?.role === 'admin' ? '<button class="secondary-button wide" data-view="admin">Painel administrativo</button>' : ''}`
@@ -482,6 +520,7 @@ openLoginBtn.addEventListener('click', () => { setAuthMode('login'); showLogin()
 closeLoginBtn.addEventListener('click', closeLogin);
 openRegisterBtn.addEventListener('click', () => { setAuthMode('register'); showLogin(); });
 authModeButton.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'register' : 'login'));
+openAdminDemo.addEventListener('click', openHostedAdminDemo);
 loginButton.addEventListener('click', () => authenticate());
 
 passwordInput.addEventListener('keydown', (event) => {
