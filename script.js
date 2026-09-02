@@ -138,6 +138,7 @@ const authTitle = document.getElementById('authTitle');
 const loginError = document.getElementById('loginError');
 const authModeButton = document.getElementById('authModeButton');
 const openAdminDemo = document.getElementById('openAdminDemo');
+const openAdminDemoTop = document.getElementById('openAdminDemoTop');
 const openLoginBtn = document.getElementById('openLogin');
 const closeLoginBtn = document.getElementById('closeLogin');
 const openRegisterBtn = document.getElementById('openRegister');
@@ -521,6 +522,7 @@ closeLoginBtn.addEventListener('click', closeLogin);
 openRegisterBtn.addEventListener('click', () => { setAuthMode('register'); showLogin(); });
 authModeButton.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'register' : 'login'));
 openAdminDemo.addEventListener('click', openHostedAdminDemo);
+openAdminDemoTop.addEventListener('click', openHostedAdminDemo);
 loginButton.addEventListener('click', () => authenticate());
 
 passwordInput.addEventListener('keydown', (event) => {
