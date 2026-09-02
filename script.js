@@ -8,6 +8,16 @@ function formatCurrency(value) {
   return `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  })[character]);
+}
+
 function getDemoAccounts() {
   return JSON.parse(localStorage.getItem('jogo-alex-demo-accounts') || '[]');
 }
@@ -144,6 +154,18 @@ async function loadAdminSettings() {
   }
 }
 
+async function loadAdminUsers() {
+  if (!appSession?.access_token) return [];
+
+  try {
+    const response = await apiRequest('/admin/users');
+    return response?.data || [];
+  } catch (error) {
+    console.warn('Não foi possível carregar usuários do admin:', error.message);
+    return [];
+  }
+}
+
 async function saveAdminSettings() {
   if (!appSession?.access_token) {
     window.alert('Faça login antes de salvar as regras de administração.');
@@ -197,11 +219,16 @@ function renderActivity() {
   `).join('');
 }
 
-function renderAdminConfig() {
+function renderAdminConfig(users = []) {
+  const totalBalance = users.reduce((total, user) => total + Number(user.wallet?.balance || 0), 0);
+  const userRows = users.length
+    ? users.map((user) => `<tr><td>${escapeHtml(user.name || 'Jogador')}</td><td>${escapeHtml(user.email || '-')}</td><td>${formatCurrency(user.wallet?.balance || 0)}</td><td>${escapeHtml(user.status || 'active')}</td></tr>`).join('')
+    : '<tr><td colspan="4">Nenhum usuário conectado ainda.</td></tr>';
+
   return `
     <div class="admin-grid">
-      <div><span>Usuários demo</span><strong>128</strong></div>
-      <div><span>Sessões ativas</span><strong>24</strong></div>
+      <div><span>Usuários cadastrados</span><strong>${users.length}</strong></div>
+      <div><span>Saldo agregado</span><strong>${formatCurrency(totalBalance)}</strong></div>
       <div><span>Jogos no catálogo</span><strong>${Object.values(sections).flat().length}</strong></div>
       <div><span>Gateway</span><strong>Pendente</strong></div>
     </div>
@@ -239,7 +266,8 @@ function renderAdminConfig() {
       <span>VIP habilitada</span>
       <button class="switch ${adminSettings.vipAccess ? 'on' : ''}" data-toggle="vipAccess" aria-label="VIP habilitada"><span></span></button>
     </div>
-    <div class="demo-callout">Painel de demonstração conectado às configurações do backend. Pagamentos e métricas financeiras ainda não estão ativos.</div>
+    <div class="demo-callout">Painel conectado às configurações do backend. Pagamentos e métricas financeiras ainda não estão ativos.</div>
+    <div class="admin-table-wrap"><h3>Usuários e saldos</h3><table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Saldo</th><th>Status</th></tr></thead><tbody>${userRows}</tbody></table></div>
     <button class="primary-button wide" data-action="saveAdminConfig">Salvar regras</button>
   `;
 }
@@ -250,7 +278,11 @@ async function openDrawer(view) {
     return;
   }
 
-  if (view === 'admin') await loadAdminSettings();
+  let adminUsers = [];
+  if (view === 'admin') {
+    await loadAdminSettings();
+    adminUsers = await loadAdminUsers();
+  }
 
   const content = {
     account: {
@@ -276,7 +308,7 @@ async function openDrawer(view) {
       eyebrow: 'Somente leitura', title: 'Histórico', html: `<div class="drawer-history">${activities.map((item) => `<div class="summary-row"><span>${item.icon} ${item.title}</span><b>${item.amount}</b></div>`).join('')}</div><p class="muted-copy">Todos os registros são criados no navegador e podem ser apagados ao recarregar a página.</p>`
     },
     admin: {
-      eyebrow: 'Painel local', title: 'Administração', html: renderAdminConfig()
+      eyebrow: 'Painel local', title: 'Administração', html: renderAdminConfig(adminUsers)
     }
   }[view] || null;
   if (!content) return;

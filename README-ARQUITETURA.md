@@ -42,6 +42,7 @@ Este projeto foi dividido em duas frentes:
 - `/wallet/deposit`
 - `/games/catalog`
 - `/games/play`
+- `/admin/users` (admin)
 - `/admin/settings`
 
 ### Banco
@@ -68,6 +69,7 @@ O arquivo `supabase/fortune_tiger_schema.sql` é somente uma migração compleme
 ## Próximos passos
 
 1. configurar as políticas de produção do Supabase
-2. substituir depósitos fictícios por um gateway aprovado
-3. adicionar transações atômicas para débito e crédito da carteira
-4. criar testes de autenticação, carteira e rodadas
+2. revisar e versionar regras de RTP por jogo com auditoria independente
+3. substituir depósitos fictícios por um gateway aprovado
+4. adicionar transações atômicas para débito e crédito da carteira
+5. criar testes de autenticação, carteira, painel admin e rodadas

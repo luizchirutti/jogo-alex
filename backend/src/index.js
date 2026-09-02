@@ -59,7 +59,7 @@ const ensureUserRecords = async (user, metadata = {}) => {
   const { data: existingUserRow } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
 
   const { data: userRow, error: userError } = existingUserRow
-    ? await supabase.from('users').update({ name: userName, email: user.email, phone, vip_level: 0, status: 'active' }).eq('id', user.id).select().single()
+    ? await supabase.from('users').update({ name: userName, email: user.email, phone }).eq('id', user.id).select().single()
     : await supabase.from('users').insert({ id: user.id, name: userName, email: user.email, phone, role: 'player', vip_level: 0, status: 'active' }).select().single();
 
   if (userError) {
@@ -461,6 +461,35 @@ app.get('/admin/settings', async (req, res) => {
     );
 
     return res.json({ data: parsed });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/admin/users', async (req, res) => {
+  const user = await getAdminUser(req);
+
+  if (!user) {
+    return res.status(403).json({ error: 'Acesso restrito ao administrador.' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, name, email, phone, role, status, vip_level, created_at, wallets(balance, currency, status)')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    const users = (data || []).map((row) => ({
+      ...row,
+      wallet: row.wallets?.[0] || { balance: 0, currency: 'BRL', status: 'active' }
+    }));
+
+    return res.json({ data: users });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

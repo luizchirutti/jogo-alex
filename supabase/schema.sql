@@ -131,8 +131,8 @@ alter table public.bonuses enable row level security;
 alter table public.admin_settings enable row level security;
 alter table public.audit_logs enable row level security;
 
+drop policy if exists "Users can update own profile" on public.users;
 create policy "Users can read own profile" on public.users for select using (auth.uid() = id);
-create policy "Users can update own profile" on public.users for update using (auth.uid() = id);
 create policy "Wallet read own" on public.wallets for select using (auth.uid() = user_id);
 create policy "Wallet update own" on public.wallets for update using (auth.uid() = user_id);
 create policy "Transactions read own" on public.transactions for select using (auth.uid() = user_id);
