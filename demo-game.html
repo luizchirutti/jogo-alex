@@ -61,7 +61,7 @@
     title.textContent = game.title; document.title = `${game.title} | Jogo Alex`; document.getElementById('tagline').textContent = game.tagline; document.getElementById('mode').textContent = game.mode; document.getElementById('rules').innerHTML = game.rules.map(rule => `<li>${rule}</li>`).join('');
     function money(value) { return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`; }
     betEl.textContent = `Aposta: ${money(bet)}`;
-    const gameArt = { 'neon-dice': 'assets/games/neon-dice.png', 'moon-crash': 'assets/games/moon-crash.svg', 'gem-forge': 'assets/games/gem-forge.svg', 'rocket-rumble': 'assets/games/rocket-rumble.png', 'lucky-lantern': 'assets/games/lucky-lantern.png' };
+    const gameArt = { 'neon-dice': 'assets/games/neon-dice.png', 'moon-crash': 'assets/games/moon-crash.svg', 'gem-forge': 'assets/games/gem-forge.png', 'rocket-rumble': 'assets/games/rocket-rumble.png', 'lucky-lantern': 'assets/games/lucky-lantern.png' };
     function setTileValue(tile, value) { tile.textContent = value; tile.style.backgroundImage = `linear-gradient(180deg, rgba(5, 12, 22, .06), rgba(5, 12, 22, .7)), url("${gameArt[slug]}")`; }
     function buildBoard(initialTiles) { board.innerHTML = initialTiles.map((tile, index) => `<div class="tile idle-float" data-index="${index}"></div>`).join(''); const tiles = [...board.querySelectorAll('.tile')]; tiles.forEach((tile, index) => setTileValue(tile, initialTiles[index])); return tiles; }
     let tileEls = buildBoard(game.icons.slice(0, 3));
