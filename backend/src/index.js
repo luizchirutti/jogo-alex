@@ -4,6 +4,8 @@ import 'dotenv/config';
 
 import FortuneTigerEngine from '../../GameEngine.js';
 import { supabase } from './config/supabase.js';
+import { gatewayClient } from './gateway/auravertaClient.js';
+import { createPaymentsRouter, reconcileDeposit, reconcileWithdrawal } from './routes/payments.js';
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -93,13 +95,67 @@ const ensureUserRecords = async (user, metadata = {}) => {
   };
 };
 
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:8000';
-app.use(cors({ origin: corsOrigin }));
+const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:8000')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+app.use(cors({ origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins }));
+
+// Precisa vir antes do express.json() global: a assinatura é calculada sobre o corpo bruto.
+app.post('/webhooks/auraverta', express.raw({ type: 'application/json' }), async (req, res) => {
+  const signature = req.headers['x-auraverta-signature'];
+  const secret = process.env.AURAVERTA_WEBHOOK_SECRET;
+  const rawBody = req.body?.toString('utf8') || '';
+
+  if (!gatewayClient.verifyWebhookSignature(rawBody, signature, secret)) {
+    console.error('Webhook Aura Verta recusado: assinatura inválida.');
+    return res.status(401).json({ error: 'Assinatura inválida.' });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(rawBody);
+  } catch {
+    return res.status(400).json({ error: 'Corpo inválido.' });
+  }
+
+  console.log(`Webhook Aura Verta recebido e assinatura válida: ${event.tipo} (${event.id})`);
+
+  // Responde rápido e processa depois, como recomendado na documentação do gateway.
+  res.status(200).json({ received: true });
+
+  try {
+    if (event.tipo === 'cobranca.estado_alterado') {
+      await reconcileDeposit({
+        supabase,
+        deposit: {
+          id: event.dados.cobranca.id,
+          status: event.dados.cobranca.estado,
+          externalReference: event.dados.cobranca.referenciaExterna
+        }
+      });
+    } else if (event.tipo === 'saque.estado_alterado') {
+      await reconcileWithdrawal({
+        supabase,
+        withdrawal: {
+          id: event.dados.saque.id,
+          status: event.dados.saque.estado,
+          externalReference: event.dados.saque.referenciaExterna
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Falha ao processar webhook Aura Verta:', error.message);
+  }
+});
+
 app.use(express.json());
 
 app.get('/health', (req, res) => {
   res.json({ ok: true, service: 'jogo-alex-backend', status: 'running' });
 });
+
+app.use('/payments', createPaymentsRouter({ supabase, getAuthenticatedUser }));
 
 app.post('/auth/register', async (req, res) => {
   const { email, phone, password, name } = req.body;
@@ -535,6 +591,6 @@ app.put('/admin/settings', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Servidor rodando na porta ${port}`);
 });

@@ -72,6 +72,16 @@
         <button class="nav-link">Suporte</button>
       </nav>
 
+      <section class="hero-strip" aria-label="Jogo em destaque">
+        <div class="hero-copy">
+          <span class="eyebrow">Em destaque hoje</span>
+          <h1>Fortune Tiger</h1>
+          <p>Uma experiência de símbolos, linhas e respins com identidade própria.</p>
+          <button class="primary-button" data-hero-game="fortune-tiger">Ver jogo</button>
+        </div>
+        <div class="hero-art" role="img" aria-label="Tigre em destaque"></div>
+      </section>
+
       <main class="content">
         <div class="ticker-wrap">
           <div class="ticker-track">
@@ -96,10 +106,6 @@
           <div class="section-block active" id="sectionQuente">
             <div class="section-title-row">
               <div class="section-title"><span class="icon">🔥</span> Quente</div>
-              <div class="carousel-controls">
-                <button class="nav-btn" aria-label="Anterior">‹</button>
-                <button class="nav-btn" aria-label="Próximo">›</button>
-              </div>
             </div>
             <div class="game-grid" id="gamesQuente"></div>
           </div>
@@ -107,10 +113,6 @@
           <div class="section-block" id="sectionNovo">
             <div class="section-title-row">
               <div class="section-title"><span class="icon">✨</span> Novo</div>
-              <div class="carousel-controls">
-                <button class="nav-btn" aria-label="Anterior">‹</button>
-                <button class="nav-btn" aria-label="Próximo">›</button>
-              </div>
             </div>
             <div class="game-grid" id="gamesNovo"></div>
           </div>
@@ -118,10 +120,6 @@
           <div class="section-block" id="sectionPG">
             <div class="section-title-row">
               <div class="section-title"><span class="icon">🎰</span> PG</div>
-              <div class="carousel-controls">
-                <button class="nav-btn" aria-label="Anterior">‹</button>
-                <button class="nav-btn" aria-label="Próximo">›</button>
-              </div>
             </div>
             <div class="game-grid" id="gamesPG"></div>
           </div>
@@ -129,10 +127,6 @@
           <div class="section-block" id="sectionPP">
             <div class="section-title-row">
               <div class="section-title"><span class="icon">🎲</span> PP</div>
-              <div class="carousel-controls">
-                <button class="nav-btn" aria-label="Anterior">‹</button>
-                <button class="nav-btn" aria-label="Próximo">›</button>
-              </div>
             </div>
             <div class="game-grid" id="gamesPP"></div>
           </div>
@@ -144,14 +138,14 @@
               <span class="eyebrow">Bônus</span>
               <h3>Ganhe R$100 de graça</h3>
             </div>
-            <button class="primary-button small">Resgatar</button>
+            <button class="primary-button small" data-action="claimOffer">Resgatar</button>
           </div>
           <div class="promo-card">
             <div>
               <span class="eyebrow">Cashback</span>
               <h3>Até 10% em apostas</h3>
             </div>
-            <button class="ghost-button small">Ver regras</button>
+            <button class="ghost-button small" data-view="promotions">Ver regras</button>
           </div>
         </section>
 
@@ -169,16 +163,16 @@
 
       <footer class="site-footer">
         <div class="footer-socials">
-          <button>Telegram Channel</button>
-          <button>Whatsapp Channel</button>
+          <button data-action="comingSoonChannel">Telegram Channel</button>
+          <button data-action="comingSoonChannel">Whatsapp Channel</button>
         </div>
         <p>
-          Dutch Antilles Management N.V. ... license no 365/JAZ Sub-License GLH-OCCHKTW0705152022
+          Jogo Alex é um protótipo de demonstração. Não processa dinheiro real, não possui licença de apostas e não está vinculado a nenhum operador licenciado.
         </p>
         <ul>
-          <li>1. Este produto é para uso de usuários maiores de 18 anos e é destinado apenas para fins de entretenimento.</li>
-          <li>2. Este i7.bet contém compras no app.</li>
-          <li>3. O fato de um jogador jogar ou ganhar em um i7.bet de apostas sociais não significa que ele ganhará em apostas com dinheiro real.</li>
+          <li>1. Este produto é para uso de usuários maiores de 18 anos e é destinado apenas para fins de demonstração/entretenimento.</li>
+          <li>2. Jogo Alex não envolve compras no aplicativo nem transações financeiras reais nesta versão.</li>
+          <li>3. O fato de um jogador jogar ou ganhar nesta demonstração não significa que ele ganharia em apostas com dinheiro real.</li>
         </ul>
         <div class="copyright">Copyright © 2015 – 2026 Jogo Alex. All rights reserved.</div>
       </footer>
@@ -245,7 +239,7 @@
             <input type="checkbox" checked />
             <span>Lembrar-me</span>
           </label>
-          <a href="#">Esqueceu a senha?</a>
+          <a href="#" data-action="forgotPassword">Esqueceu a senha?</a>
         </div>
 
         <button class="primary-button wide" id="loginButton">Entrar</button>

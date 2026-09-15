@@ -34,12 +34,121 @@
       }
 
       .slot-cell {
+        position: relative;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 0 0 1px var(--glow, transparent) inset, 0 0 14px var(--glow, transparent);
+      }
+
+      .slot-cell::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 8, 16, .08), rgba(3, 8, 16, .72)); pointer-events: none; }
+      .symbol-label { position: relative; z-index: 1; padding: 5px 8px; border: 1px solid rgba(255,255,255,.3); border-radius: 7px; background: rgba(5, 11, 20, .58); color: #fff4c2; font-size: clamp(.58rem, 1.5vw, .78rem); font-weight: 900; letter-spacing: .12em; text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+
+      .slot-cell[data-symbol="orange"] { --glow: rgba(251,146,60,0.35); }
+      .slot-cell[data-symbol="fire"] { --glow: rgba(248,113,113,0.4); }
+      .slot-cell[data-symbol="envelope"] { --glow: rgba(251,113,133,0.4); }
+      .slot-cell[data-symbol="coins"] { --glow: rgba(250,204,21,0.45); }
+      .slot-cell[data-symbol="jade"] { --glow: rgba(52,211,153,0.4); }
+      .slot-cell[data-symbol="gold"] { --glow: rgba(251,191,36,0.55); }
+      .slot-cell[data-symbol="wild"] { --glow: rgba(245,158,11,0.7); }
+
+      .slot-cell.idle-float { animation: idleFloat 3.6s ease-in-out infinite; }
+      .slot-cell:nth-child(3n+1).idle-float { animation-delay: 0s; }
+      .slot-cell:nth-child(3n+2).idle-float { animation-delay: .3s; }
+      .slot-cell:nth-child(3n+3).idle-float { animation-delay: .6s; }
+
+      @keyframes idleFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+      }
+
+      .slot-cell.spinning {
+        animation: reelSpin 0.12s linear infinite;
+        filter: blur(1.5px);
+        box-shadow: none;
+      }
+
+      @keyframes reelSpin {
+        0% { transform: translateY(-6px) scale(.97); opacity: .75; }
+        50% { transform: translateY(4px) scale(1.02); opacity: 1; }
+        100% { transform: translateY(-6px) scale(.97); opacity: .75; }
+      }
+
+      .slot-cell.landing {
+        animation: reelLand 0.45s cubic-bezier(.17,.89,.32,1.49);
+      }
+
+      @keyframes reelLand {
+        0% { transform: translateY(-22px) scale(.85); opacity: .4; }
+        60% { transform: translateY(4px) scale(1.08); opacity: 1; }
+        100% { transform: translateY(0) scale(1); opacity: 1; }
       }
 
       .slot-cell.win {
-        box-shadow: 0 0 0 2px rgba(244,196,81,0.95), 0 0 18px rgba(244,196,81,0.45);
-        transform: scale(1.05);
+        box-shadow: 0 0 0 2px rgba(244,196,81,0.95), 0 0 24px rgba(244,196,81,0.6);
+        animation: winPulse 0.6s ease-in-out 2;
+      }
+
+      @keyframes winPulse {
+        0%, 100% { transform: scale(1.05); }
+        50% { transform: scale(1.16); }
+      }
+
+      .board-shine {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(115deg, transparent 40%, rgba(244,196,81,0.16) 50%, transparent 60%);
+        background-size: 260% 260%;
+        animation: shineSweep 5s ease-in-out infinite;
+        border-radius: 28px;
+      }
+
+      @keyframes shineSweep {
+        0% { background-position: 120% 0%; }
+        50% { background-position: -20% 100%; }
+        100% { background-position: 120% 0%; }
+      }
+
+      .coin-particle {
+        position: absolute;
+        font-size: 1.4rem;
+        will-change: transform, opacity;
+        animation: coinBurst 0.9s ease-out forwards;
+      }
+
+      @keyframes coinBurst {
+        0% { transform: translate(0, 0) scale(.6) rotate(0deg); opacity: 1; }
+        100% { transform: var(--fly, translate(0, -70px)) scale(1) rotate(160deg); opacity: 0; }
+      }
+
+      .bigwin-flash {
+        background: radial-gradient(circle, rgba(244,196,81,0.35), rgba(24,10,10,0) 65%);
+        animation: bigWinFlash 1.4s ease-in-out infinite;
+      }
+
+      @keyframes bigWinFlash {
+        0%, 100% { opacity: .55; }
+        50% { opacity: 1; }
+      }
+
+      .bigwin-text {
+        animation: bigWinPop 0.55s cubic-bezier(.17,.89,.32,1.49);
+        text-shadow: 0 0 24px rgba(244,196,81,0.65);
+      }
+
+      @keyframes bigWinPop {
+        0% { transform: scale(.4); opacity: 0; }
+        70% { transform: scale(1.08); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+
+      #spinButton:active:not(:disabled) { transform: scale(.97); }
+      #soundToggle:active { transform: scale(.92); }
+
+      @media (prefers-reduced-motion: reduce) {
+        .slot-cell, .board-shine, .bigwin-flash, .bigwin-text, .coin-particle { animation: none !important; }
       }
     </style>
   </head>
@@ -53,6 +162,7 @@
           </div>
 
           <div class="flex items-center gap-3">
+            <button id="soundToggle" type="button" class="flex h-11 w-11 items-center justify-center rounded-2xl border border-yellow-400/30 bg-black/20 text-xl transition hover:bg-black/30" aria-label="Ativar ou desativar som">🔊</button>
             <div class="rounded-2xl border border-yellow-400/30 bg-black/20 px-4 py-2 text-sm">
               <span class="block text-[10px] uppercase tracking-[0.25rem] text-yellow-200/80">Saldo</span>
               <strong id="balance" class="text-xl font-bold">R$ 250.00</strong>
@@ -77,16 +187,17 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-3 rounded-[28px] border border-yellow-500/20 bg-[#2b1212] p-4">
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="0">🍊</div>
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="1">🍊</div>
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="2">🧨</div>
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="3">💰</div>
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="4">🐯</div>
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="5">✉️</div>
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="6">🥇</div>
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="7">🗿</div>
-            <div class="slot-cell flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 text-5xl shadow-inner shadow-red-900/40" data-index="8">🍊</div>
+          <div class="relative grid grid-cols-3 gap-3 rounded-[28px] border border-yellow-500/20 bg-[#2b1212] p-4">
+            <div class="board-shine"></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="0" data-symbol="orange"><span class="symbol-label">TANGERINA</span></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="1" data-symbol="orange"><span class="symbol-label">TANGERINA</span></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="2" data-symbol="fire"><span class="symbol-label">FOGOS</span></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="3" data-symbol="coins"><span class="symbol-label">MOEDAS</span></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="4" data-symbol="wild"><span class="symbol-label">TIGER</span></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="5" data-symbol="envelope"><span class="symbol-label">ENVELOPE</span></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="6" data-symbol="gold"><span class="symbol-label">OURO</span></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="7" data-symbol="jade"><span class="symbol-label">JADE</span></div>
+            <div class="slot-cell idle-float flex aspect-square items-center justify-center rounded-2xl border border-red-300/20 bg-gradient-to-br from-red-500/30 to-yellow-400/10 shadow-inner shadow-red-900/40" data-index="8" data-symbol="orange"><span class="symbol-label">TANGERINA</span></div>
           </div>
 
           <div class="mt-5 flex flex-wrap items-center gap-3">
@@ -118,26 +229,38 @@
           </div>
 
           <div class="rounded-2xl border border-red-500/20 bg-black/20 p-4">
-            <p class="text-[10px] uppercase tracking-[0.25rem] text-yellow-200/70">Paytable</p>
+            <p class="text-[10px] uppercase tracking-[0.25rem] text-yellow-200/70">Paytable (3 na linha)</p>
             <div class="mt-3 space-y-2 text-sm">
-              <div class="flex items-center justify-between"><span>🍊 Tangerina</span><strong>2.5x</strong></div>
-              <div class="flex items-center justify-between"><span>🧨 Fogos</span><strong>4.5x</strong></div>
-              <div class="flex items-center justify-between"><span>✉️ Envelope</span><strong>6.5x</strong></div>
-              <div class="flex items-center justify-between"><span>💰 Moedas</span><strong>8.5x</strong></div>
-              <div class="flex items-center justify-between"><span>🗿 Jade</span><strong>11x</strong></div>
-              <div class="flex items-center justify-between"><span>🥇 Ouro</span><strong>14x</strong></div>
+              <div class="flex items-center justify-between"><span>🍊 Tangerina</span><strong>1.5x</strong></div>
+              <div class="flex items-center justify-between"><span>🧨 Fogos</span><strong>2.5x</strong></div>
+              <div class="flex items-center justify-between"><span>✉️ Envelope</span><strong>3.5x</strong></div>
+              <div class="flex items-center justify-between"><span>💰 Moedas</span><strong>5.5x</strong></div>
+              <div class="flex items-center justify-between"><span>🗿 Jade</span><strong>7.5x</strong></div>
+              <div class="flex items-center justify-between"><span>🥇 Ouro</span><strong>10.5x</strong></div>
               <div class="flex items-center justify-between"><span>🐯 Tiger Wild</span><strong>18x</strong></div>
             </div>
+            <p class="mt-3 text-[11px] leading-relaxed text-red-100/60">Valores multiplicam a aposta por linha vencedora. Grade cheia paga 10x o total das linhas.</p>
           </div>
         </aside>
       </main>
     </div>
 
+    <div id="fxLayer" class="pointer-events-none fixed inset-0 z-40 overflow-hidden"></div>
+    <div id="bigWinOverlay" class="pointer-events-none fixed inset-0 z-50 hidden items-center justify-center">
+      <div class="bigwin-flash absolute inset-0"></div>
+      <div class="bigwin-text relative text-center">
+        <p class="text-sm font-black uppercase tracking-[0.4rem] text-yellow-200">Fortune Tiger</p>
+        <h2 class="mt-1 text-5xl font-black text-yellow-300 md:text-7xl">GRANDE VITÓRIA</h2>
+        <p id="bigWinAmount" class="mt-3 text-3xl font-black text-white md:text-4xl">R$ 0.00</p>
+      </div>
+    </div>
+
     <script type="module">
-      import FortuneTigerEngine, { PAYLINES } from './GameEngine.js';
+      import FortuneTigerEngine, { PAYLINES, SYMBOLS } from './GameEngine.js';
 
       const engine = new FortuneTigerEngine({ betAmount: 5 });
       const cells = [...document.querySelectorAll('.slot-cell')];
+      const columns = [[0, 3, 6], [1, 4, 7], [2, 5, 8]];
       const spinButton = document.getElementById('spinButton');
       const increaseBet = document.getElementById('increaseBet');
       const decreaseBet = document.getElementById('decreaseBet');
@@ -148,16 +271,134 @@
       const roundStatus = document.getElementById('roundStatus');
       const lineValue = document.getElementById('lineValue');
       const featureBadge = document.getElementById('featureBadge');
+      const soundToggle = document.getElementById('soundToggle');
+      const fxLayer = document.getElementById('fxLayer');
+      const bigWinOverlay = document.getElementById('bigWinOverlay');
+      const bigWinAmount = document.getElementById('bigWinAmount');
+
+      const symbolKeys = Object.keys(SYMBOLS);
+      const randomSymbolKey = () => symbolKeys[Math.floor(Math.random() * symbolKeys.length)];
+      const symbolLabels = { orange: 'TANGERINA', fire: 'FOGOS', envelope: 'ENVELOPE', coins: 'MOEDAS', jade: 'JADE', gold: 'OURO', wild: 'TIGER' };
+      const symbolArt = { orange: 'assets/games/lucky-lantern.jpg', fire: 'assets/games/neon-dice.jpg', envelope: 'assets/games/lucky-lantern.jpg', coins: 'assets/games/gem-forge.jpg', jade: 'assets/games/gem-forge.jpg', gold: 'assets/games/fortune-tiger.jpg', wild: 'assets/games/fortune-tiger.jpg' };
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
       let currentBet = 5;
       let currentBalance = 250;
 
-      const renderGrid = (symbols) => {
-        cells.forEach((cell, index) => {
-          const symbol = symbols[index] || '🍊';
-          cell.textContent = symbol;
-          cell.classList.remove('win');
-        });
+      // --- Som sintetizado via Web Audio API: nenhum arquivo externo, sem risco de direitos autorais. ---
+      const SlotSound = (() => {
+        let ctx = null;
+        let muted = localStorage.getItem('jogo-alex-muted') === '1';
+
+        const ensureContext = () => {
+          if (!ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) ctx = new AudioCtx();
+          }
+          if (ctx?.state === 'suspended') ctx.resume();
+          return ctx;
+        };
+
+        const tone = (freq, { duration = 0.15, type = 'sine', gain = 0.18, delay = 0, glideTo = null } = {}) => {
+          if (muted) return;
+          const audioCtx = ensureContext();
+          if (!audioCtx) return;
+
+          const start = audioCtx.currentTime + delay;
+          const osc = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, start);
+          if (glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, start + duration);
+          gainNode.gain.setValueAtTime(gain, start);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, start + duration);
+          osc.connect(gainNode).connect(audioCtx.destination);
+          osc.start(start);
+          osc.stop(start + duration + 0.02);
+        };
+
+        return {
+          toggleMute() {
+            muted = !muted;
+            localStorage.setItem('jogo-alex-muted', muted ? '1' : '0');
+            return muted;
+          },
+          isMuted: () => muted,
+          unlock: () => ensureContext(),
+          click: () => tone(520, { duration: 0.07, type: 'square', gain: 0.08 }),
+          reelStop: (index) => tone(260 + index * 40, { duration: 0.09, type: 'triangle', gain: 0.16 }),
+          winChime: (tier = 1) => {
+            const notes = [523.25, 659.25, 783.99, 1046.5];
+            notes.slice(0, 2 + Math.min(tier, 2)).forEach((freq, i) => {
+              tone(freq, { duration: 0.28, type: 'sine', gain: 0.14, delay: i * 0.09 });
+            });
+          },
+          bigWin: () => {
+            const notes = [523.25, 659.25, 783.99, 987.77, 1174.66, 1567.98];
+            notes.forEach((freq, i) => {
+              tone(freq, { duration: 0.45, type: 'triangle', gain: 0.15, delay: i * 0.12 });
+            });
+          }
+        };
+      })();
+
+      const updateSoundIcon = () => { soundToggle.textContent = SlotSound.isMuted() ? '🔇' : '🔊'; };
+      updateSoundIcon();
+      soundToggle.addEventListener('click', () => { SlotSound.unlock(); SlotSound.toggleMute(); updateSoundIcon(); });
+
+      const spawnCoinParticles = (index, count = 5) => {
+        const cell = cells[index];
+        const rect = cell.getBoundingClientRect();
+        for (let i = 0; i < count; i += 1) {
+          const particle = document.createElement('div');
+          particle.className = 'coin-particle';
+          particle.textContent = Math.random() > 0.5 ? '🪙' : '✨';
+          particle.style.left = `${rect.left + rect.width / 2}px`;
+          particle.style.top = `${rect.top + rect.height / 2}px`;
+          const angle = Math.random() * Math.PI * 2;
+          const distance = 50 + Math.random() * 40;
+          particle.style.setProperty('--fly', `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance - 40}px)`);
+          fxLayer.appendChild(particle);
+          setTimeout(() => particle.remove(), 950);
+        }
+      };
+
+      const animateCount = (el, from, to, { prefix = 'R$ ', duration = 500 } = {}) => {
+        const start = performance.now();
+        const step = (now) => {
+          const progress = Math.min(1, (now - start) / duration);
+          const eased = 1 - (1 - progress) ** 3;
+          const value = from + (to - from) * eased;
+          el.textContent = `${prefix}${value.toFixed(2)}`;
+          if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      };
+
+      const showBigWin = (amount) => {
+        SlotSound.bigWin();
+        bigWinAmount.textContent = `R$ ${amount.toFixed(2)}`;
+        bigWinOverlay.classList.remove('hidden');
+        bigWinOverlay.classList.add('flex');
+        for (let i = 0; i < 18; i += 1) {
+          setTimeout(() => spawnCoinParticles(Math.floor(Math.random() * cells.length), 1), i * 60);
+        }
+        setTimeout(() => {
+          bigWinOverlay.classList.add('hidden');
+          bigWinOverlay.classList.remove('flex');
+        }, 2200);
+      };
+
+      const setCellSymbol = (index, symbolKey) => {
+        const cell = cells[index];
+        cell.dataset.symbol = symbolKey;
+        cell.style.backgroundImage = `url("${symbolArt[symbolKey]}")`;
+        cell.innerHTML = `<span class="symbol-label">${symbolLabels[symbolKey] || 'SÍMBOLO'}</span>`;
+      };
+
+      const renderGrid = (grid) => {
+        grid.forEach((symbolKey, index) => setCellSymbol(index, symbolKey));
+        cells.forEach((cell) => cell.classList.remove('win'));
       };
 
       const renderInfo = (result) => {
@@ -176,13 +417,76 @@
         betValue.textContent = `R$ ${currentBet.toFixed(2)}`;
       };
 
+      // Gira os rolos visualmente (cada coluna para em um momento diferente) e só então revela o resultado real.
+      const playReels = async (finalGrid) => {
+        cells.forEach((cell) => { cell.classList.remove('win'); cell.classList.remove('idle-float'); cell.classList.add('spinning'); });
+        const spinIntervals = cells.map((cell, index) => setInterval(() => {
+          setCellSymbol(index, randomSymbolKey());
+        }, 70));
+
+        for (const [columnIndex, positions] of columns.entries()) {
+          await sleep(420 + columnIndex * 260);
+          positions.forEach((cellIndex) => {
+            clearInterval(spinIntervals[cellIndex]);
+            const cell = cells[cellIndex];
+            cell.classList.remove('spinning');
+            setCellSymbol(cellIndex, finalGrid[cellIndex]);
+            cell.classList.add('landing');
+            setTimeout(() => cell.classList.remove('landing'), 460);
+          });
+          SlotSound.reelStop(columnIndex);
+        }
+
+        cells.forEach((cell) => cell.classList.add('idle-float'));
+      };
+
+      const revealWinLines = async (lines) => {
+        for (const [lineIndex, line] of lines.entries()) {
+          await sleep(lineIndex === 0 ? 120 : 260);
+          line.positions.forEach((index) => {
+            cells[index].classList.add('win');
+            spawnCoinParticles(index, 4);
+          });
+          SlotSound.winChime(Math.min(2, Math.floor(line.lineWin / Math.max(currentBet, 1))));
+        }
+      };
+
+      const applyRoundResult = async (result) => {
+        await playReels(result.grid);
+
+        const previousBalance = currentBalance;
+        currentBalance = result.balance ?? currentBalance - currentBet + result.winAmount;
+        animateCount(balance, previousBalance, currentBalance);
+        renderInfo(result);
+
+        const lines = result.lines || [];
+        if (lines.length) await revealWinLines(lines);
+
+        if (result.fullScreen) {
+          cells.forEach((cell, index) => { cell.classList.add('win'); spawnCoinParticles(index, 2); });
+        }
+
+        const bigWinThreshold = currentBet * 15;
+        if (result.fullScreen || result.winAmount >= bigWinThreshold) {
+          await sleep(200);
+          showBigWin(result.winAmount);
+        }
+      };
+
       const requestSpin = async () => {
+        if (currentBalance < currentBet) {
+          roundStatus.textContent = 'Saldo insuficiente para esta aposta';
+          return;
+        }
+
+        SlotSound.unlock();
+        SlotSound.click();
         spinButton.disabled = true;
         spinButton.textContent = 'Girando...';
 
         try {
           if (window.location.hostname !== 'localhost' && !window.JOGO_ALEX_API_BASE) {
-            throw new Error('Modo demonstração hospedado');
+            throw { offline: true };
           }
 
           const apiBase = window.JOGO_ALEX_API_BASE || 'http://localhost:4000';
@@ -192,43 +496,21 @@
             body: JSON.stringify({ bet_amount: currentBet })
           });
 
+          const payload = await response.json().catch(() => null);
+
           if (!response.ok) {
-            throw new Error('Servidor indisponível');
+            // Rejeição real do servidor (ex.: saldo insuficiente na conta logada): não cair para o saldo fictício local.
+            if (payload?.error) {
+              roundStatus.textContent = payload.error;
+              return;
+            }
+            throw { offline: true };
           }
 
-          const payload = await response.json();
-          const result = payload.data;
-
-          renderGrid(result.symbols);
-          currentBalance = result.balance ?? currentBalance - currentBet + result.winAmount;
-          balance.textContent = `R$ ${currentBalance.toFixed(2)}`;
-          renderInfo(result);
-          const features = result.lines || [];
-          if (features.length) {
-            features.forEach(({ positions }) => {
-              positions.forEach((index) => cells[index].classList.add('win'));
-            });
-          }
-
-          if (result.fullScreen) {
-            cells.forEach((cell) => cell.classList.add('win'));
-          }
+          await applyRoundResult(payload.data);
         } catch (error) {
           const fallback = engine.spin({ betAmount: currentBet });
-          renderGrid(fallback.symbols);
-          currentBalance = currentBalance - currentBet + fallback.winAmount;
-          balance.textContent = `R$ ${currentBalance.toFixed(2)}`;
-          renderInfo(fallback);
-          const features = fallback.lines || [];
-          if (features.length) {
-            features.forEach(({ positions }) => {
-              positions.forEach((index) => cells[index].classList.add('win'));
-            });
-          }
-
-          if (fallback.fullScreen) {
-            cells.forEach((cell) => cell.classList.add('win'));
-          }
+          await applyRoundResult(fallback);
         } finally {
           spinButton.disabled = false;
           spinButton.textContent = 'Girar';
@@ -239,9 +521,11 @@
       decreaseBet.addEventListener('click', () => setBet(currentBet - 1));
       spinButton.addEventListener('click', requestSpin);
 
-      setBet(currentBet);
-      renderGrid(['🍊', '🍊', '🧨', '💰', '🐯', '✉️', '🥇', '🗿', '🍊']);
+      const requestedBet = Number(new URLSearchParams(window.location.search).get('bet'));
+      setBet(Number.isFinite(requestedBet) && requestedBet > 0 ? requestedBet : currentBet);
+      renderGrid(['orange', 'orange', 'fire', 'coins', 'wild', 'envelope', 'gold', 'jade', 'orange']);
       renderInfo({ winAmount: 0, multiplier: 1, featureTriggered: false, lines: [], isWin: false });
     </script>
   </body>
 </html>
+

@@ -118,12 +118,12 @@ const providerTabs = [
 
 const sections = {
   Quente: [
-    { title: 'Fortune Tiger', badge: 'Demo', slug: 'fortune-tiger', rtp: '96.8%' },
-    { title: 'Neon Dice', badge: 'Novo', slug: 'neon-dice', rtp: '97.1%' },
-    { title: 'Moon Crash', badge: 'Novo', slug: 'moon-crash', rtp: '96.4%' },
-    { title: 'Gem Forge', badge: 'Demo', slug: 'gem-forge', rtp: '96.9%' },
-    { title: 'Rocket Rumble', badge: 'Demo', slug: 'rocket-rumble', rtp: '97.3%' },
-    { title: 'Lucky Lantern', badge: 'Novo', slug: 'lucky-lantern', rtp: '96.7%' }
+    { title: 'Fortune Tiger', badge: 'Destaque', slug: 'fortune-tiger', rtp: '96.8%', art: 'assets/games/fortune-tiger.jpg', theme: 'tiger' },
+    { title: 'Neon Dice', badge: 'Novo', slug: 'neon-dice', rtp: '97.1%', art: 'assets/games/neon-dice.jpg', theme: 'neon' },
+    { title: 'Moon Crash', badge: 'Novo', slug: 'moon-crash', rtp: '96.4%', art: 'assets/games/moon-crash.jpg', theme: 'moon' },
+    { title: 'Gem Forge', badge: 'Demo', slug: 'gem-forge', rtp: '96.9%', art: 'assets/games/gem-forge.jpg', theme: 'gem' },
+    { title: 'Rocket Rumble', badge: 'Demo', slug: 'rocket-rumble', rtp: '97.3%', art: 'assets/games/rocket-rumble.jpg', theme: 'rocket' },
+    { title: 'Lucky Lantern', badge: 'Novo', slug: 'lucky-lantern', rtp: '96.7%', art: 'assets/games/lucky-lantern.jpg', theme: 'lantern' }
   ]
 };
 
@@ -331,11 +331,25 @@ async function openDrawer(view) {
         <h3>Resumo</h3><div class="summary-row"><span>Bônus de demonstração</span><b>R$ 100,00</b></div><div class="summary-row"><span>Saldo utilizado</span><b>R$ 0,00</b></div>
         <button class="secondary-button wide" data-view="history">Abrir histórico</button>${authenticatedUser?.role === 'admin' ? '<button class="secondary-button wide" data-view="admin">Painel administrativo</button>' : ''}`
     },
-    deposit: {
+    deposit: isHostedDemo ? {
       eyebrow: 'Modo demonstração', title: 'Depósito', html: `<div class="demo-callout">Nenhum pagamento será processado nesta versão. Este crédito usa a API interna apenas para demonstrar o fluxo da carteira.</div><label class="field"><span>Valor ilustrativo</span><input type="number" value="100" min="1" /></label><button class="primary-button wide" data-action="demoDeposit">Simular crédito</button>`
+    } : {
+      eyebrow: 'Pix', title: 'Depósito', html: `
+        <label class="field"><span>Valor do depósito (R$)</span><input type="number" id="pixDepositAmount" value="50" min="1" step="0.01" /></label>
+        <label class="field"><span>Nome completo</span><input type="text" id="pixDepositName" value="${escapeHtml(authenticatedUser?.name || '')}" /></label>
+        <label class="field"><span>CPF ou CNPJ</span><input type="text" id="pixDepositDocument" placeholder="Somente números" /></label>
+        <button class="primary-button wide" data-action="pixDeposit">Gerar Pix</button>
+        <p class="muted-copy">Você recebe um Pix copia-e-cola para pagar. O saldo é creditado automaticamente quando o pagamento for confirmado.</p>`
     },
-    withdraw: {
+    withdraw: isHostedDemo ? {
       eyebrow: 'Modo demonstração', title: 'Saque', html: `<div class="demo-callout">Dados bancários não são solicitados neste protótipo. Esta tela apenas representa o fluxo futuro.</div><label class="field"><span>Valor ilustrativo</span><input type="number" value="50" min="1" /></label><button class="primary-button wide" data-action="demoWithdraw">Simular solicitação</button>`
+    } : {
+      eyebrow: 'Pix', title: 'Saque', html: `
+        <label class="field"><span>Valor do saque (R$)</span><input type="number" id="pixWithdrawAmount" value="50" min="1" step="0.01" /></label>
+        <label class="field"><span>Tipo de chave Pix</span><select id="pixWithdrawKeyType"><option value="cpf">CPF</option><option value="cnpj">CNPJ</option><option value="email">E-mail</option><option value="telefone">Telefone</option><option value="aleatoria">Chave aleatória</option></select></label>
+        <label class="field"><span>Chave Pix</span><input type="text" id="pixWithdrawKeyValue" placeholder="Conforme o tipo escolhido" /></label>
+        <button class="primary-button wide" data-action="pixWithdraw">Solicitar saque</button>
+        <p class="muted-copy">O valor é reservado imediatamente. Você recebe a confirmação assim que o Pix for processado.</p>`
     },
     promotions: {
       eyebrow: 'Benefícios fictícios', title: 'Promoções', html: `<div class="offer-card"><span class="offer-tag">NOVO</span><h3>Boas-vindas</h3><p>R$ 100 em saldo demonstrativo para explorar a interface.</p><button class="primary-button small" data-action="claimOffer">Reservar oferta</button></div><div class="offer-card"><span class="offer-tag">CASHBACK</span><h3>Jogue com responsabilidade</h3><p>Experimente o catálogo sem dinheiro real e sem integração externa.</p></div>`
@@ -370,8 +384,11 @@ function openGame(game) {
   startDemoGameButton.textContent = `Abrir ${game.title}`;
   startDemoGameButton.dataset.slug = game.slug;
   document.querySelector('.muted-copy').textContent = 'Experiência demonstrativa com saldo fictício. Nenhuma aposta ou conexão externa é realizada.';
-  const selectedGradient = 'linear-gradient(135deg, rgba(251, 191, 36, 0.8), rgba(244, 63, 94, 0.72))';
-  document.getElementById('gamePreviewArt').style.background = selectedGradient;
+  const previewArt = document.getElementById('gamePreviewArt');
+  previewArt.style.backgroundImage = `linear-gradient(90deg, rgba(7, 16, 27, .2), rgba(7, 16, 27, .05)), url("${game.art}")`;
+  previewArt.style.backgroundPosition = 'center';
+  previewArt.style.backgroundSize = 'cover';
+  previewArt.setAttribute('aria-label', `Arte de ${game.title}`);
   gameOverlay.classList.add('visible');
   gameOverlay.setAttribute('aria-hidden', 'false');
 }
@@ -401,8 +418,8 @@ function renderGames() {
     grid.innerHTML = items
       .map(
         (game) => `
-          <article class="game-card" aria-label="${game.title}">
-            <div class="game-art"></div>
+          <article class="game-card game-card-${game.theme}" aria-label="${game.title}">
+            <img class="game-art" src="${game.art}" alt="Arte temática de ${game.title}" loading="lazy" />
             <div class="game-content">
                 <span class="game-badge">${game.badge}</span>
               <h3 class="game-title">${game.title}</h3>
@@ -544,7 +561,8 @@ document.addEventListener('click', (event) => {
     return;
   }
 
-  const action = event.target.closest('[data-action]')?.dataset.action;
+  const actionEl = event.target.closest('[data-action]');
+  const action = actionEl?.dataset.action;
   const toggle = event.target.closest('[data-toggle]');
 
   if (toggle) {
@@ -592,10 +610,96 @@ document.addEventListener('click', (event) => {
     }).then(applyDemoDeposit).catch((error) => window.alert(error.message || 'Não foi possível simular o crédito.'));
   }
   if (action === 'demoWithdraw') { activities.unshift({ icon: '↗', title: 'Saque simulado', detail: 'Nenhum dado enviado', time: 'Agora', amount: 'Aguardando gateway' }); renderActivity(); }
-  if (action === 'claimOffer') activities.unshift({ icon: '🎁', title: 'Oferta reservada', detail: 'Bônus demonstrativo', time: 'Agora', amount: '+ R$ 100 fictícios' });
+  if (action === 'pixDeposit') {
+    if (!appSession?.access_token) {
+      window.alert('Entre na conta para gerar um Pix de depósito.');
+      return;
+    }
+    const amount = Number(document.getElementById('pixDepositAmount')?.value || 0);
+    const payerName = document.getElementById('pixDepositName')?.value.trim();
+    const payerDocument = document.getElementById('pixDepositDocument')?.value.replace(/\D/g, '');
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      window.alert('Informe um valor maior que zero.');
+      return;
+    }
+    if (!payerDocument) {
+      window.alert('Informe o CPF ou CNPJ do pagador.');
+      return;
+    }
+
+    apiRequest('/payments/pix/deposits', {
+      method: 'POST',
+      body: JSON.stringify({ amount, payer_name: payerName, payer_document: payerDocument })
+    }).then((response) => {
+      const deposit = response.deposit;
+      activities.unshift({ icon: '💳', title: 'Pix gerado', detail: `Cobrança ${deposit.id}`, time: 'Agora', amount: formatCurrency(deposit.amountReais) });
+      renderActivity();
+      drawerContent.innerHTML = `
+        <div class="demo-callout">Pague o Pix abaixo. O saldo é creditado automaticamente após a confirmação.</div>
+        <label class="field"><span>Pix copia e cola</span><textarea class="pix-code" readonly rows="4">${escapeHtml(deposit.pix?.copiaECola || 'Aguardando geração do QR Code...')}</textarea></label>
+        <button class="secondary-button wide" data-action="pixDepositCheckStatus" data-deposit-id="${deposit.id}">Já paguei, verificar</button>`;
+    }).catch((error) => window.alert(error.message || 'Não foi possível gerar o Pix.'));
+  }
+  if (action === 'pixDepositCheckStatus') {
+    const depositId = actionEl.dataset.depositId;
+    apiRequest(`/payments/pix/deposits/${depositId}`).then((response) => {
+      const status = response.deposit?.status;
+      if (status === 'Concluida') {
+        window.alert('Pagamento confirmado! Saldo atualizado.');
+        loadAuthenticatedState();
+        closeDrawer();
+      } else {
+        window.alert(`Pagamento ainda não confirmado (estado atual: ${status}).`);
+      }
+    }).catch((error) => window.alert(error.message || 'Não foi possível verificar o pagamento.'));
+  }
+  if (action === 'pixWithdraw') {
+    if (!appSession?.access_token) {
+      window.alert('Entre na conta para solicitar um saque.');
+      return;
+    }
+    const amount = Number(document.getElementById('pixWithdrawAmount')?.value || 0);
+    const pixKeyType = document.getElementById('pixWithdrawKeyType')?.value;
+    const pixKeyValue = document.getElementById('pixWithdrawKeyValue')?.value.trim();
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      window.alert('Informe um valor maior que zero.');
+      return;
+    }
+    if (!pixKeyValue) {
+      window.alert('Informe a chave Pix de destino.');
+      return;
+    }
+    if (!window.confirm(`Confirmar saque de ${formatCurrency(amount)} para a chave Pix informada? Essa ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    apiRequest('/payments/pix/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({ amount, pix_key_type: pixKeyType, pix_key_value: pixKeyValue })
+    }).then((response) => {
+      if (response.pending_review) {
+        window.alert(response.message);
+      } else {
+        activities.unshift({ icon: '↗', title: 'Saque solicitado', detail: `Saque ${response.withdrawal.id}`, time: 'Agora', amount: formatCurrency(amount) });
+        renderActivity();
+        window.alert('Saque solicitado com sucesso. Acompanhe o status no histórico.');
+      }
+      if (typeof response.balance === 'number') {
+        authenticatedUser.balance = response.balance;
+        const userBalance = document.querySelector('#userPanel .user-balance strong');
+        if (userBalance) userBalance.textContent = formatCurrency(response.balance);
+      }
+      closeDrawer();
+    }).catch((error) => window.alert(error.message || 'Não foi possível solicitar o saque.'));
+  }
+  if (action === 'claimOffer') { activities.unshift({ icon: '🎁', title: 'Oferta reservada', detail: 'Bônus demonstrativo', time: 'Agora', amount: '+ R$ 100 fictícios' }); renderActivity(); }
   if (action === 'supportMessage') window.alert('Demonstração: mensagem não enviada.');
   if (action === 'supportFaq') window.alert('Demonstração: FAQ em construção.');
   if (action === 'exportDemo') window.alert('Demonstração: relatório fictício pronto para exportação.');
+  if (action === 'comingSoonChannel') window.alert('Canal em breve nesta demonstração.');
+  if (action === 'forgotPassword') { event.preventDefault(); window.alert('Demonstração: recuperação de senha não está disponível neste protótipo.'); }
   if (action === 'saveAdminConfig') {
     document.querySelectorAll('[data-setting]').forEach((input) => {
       const key = input.dataset.setting;
@@ -616,14 +720,24 @@ document.querySelectorAll('.mini-action').forEach((button) => {
   if (action === 'Minha conta') button.addEventListener('click', () => openDrawer('account'));
   if (action === 'Ganhe R$100 de graça') button.addEventListener('click', () => openDrawer('promotions'));
   if (action === 'Suporte ao vivo') button.addEventListener('click', () => openDrawer('support'));
+  if (action === 'Mensagem') button.addEventListener('click', () => openDrawer('support'));
+  if (action === 'Ranking') button.addEventListener('click', () => window.alert('Ranking de jogadores em breve nesta demonstração.'));
+  if (action === 'Adicionar à tela inicial') button.addEventListener('click', () => window.alert('Use o menu do seu navegador (⋮ ou compartilhar) para adicionar esta página à tela inicial.'));
+});
+
+document.querySelector('[data-hero-game]')?.addEventListener('click', (event) => {
+  const featuredGame = sections.Quente.find((game) => game.slug === event.currentTarget.dataset.heroGame);
+  if (featuredGame) openGame(featuredGame);
 });
 
 document.querySelectorAll('.nav-link').forEach((button) => {
   button.addEventListener('click', () => {
     document.querySelectorAll('.nav-link').forEach((node) => node.classList.remove('active'));
     button.classList.add('active');
-    if (button.textContent.trim() === 'Promoções') openDrawer('promotions');
-    if (button.textContent.trim() === 'Suporte') openDrawer('support');
+    const label = button.textContent.trim();
+    if (label === 'Promoções') openDrawer('promotions');
+    if (label === 'Suporte') openDrawer('support');
+    if (label === 'Esportes' || label === 'Ao vivo') window.alert(`${label}: em construção nesta demonstração.`);
   });
 });
 
@@ -644,8 +758,8 @@ document.querySelectorAll('.bet-option').forEach((button) => {
 startDemoGameButton.addEventListener('click', () => {
   const slug = startDemoGameButton.dataset.slug || 'fortune-tiger';
   const target = slug === 'fortune-tiger'
-    ? `${window.location.origin}/fortune-tiger.html`
-    : `${window.location.origin}/demo-game.html?game=${encodeURIComponent(slug)}`;
+    ? `${window.location.origin}/fortune-tiger.html?bet=${encodeURIComponent(selectedDemoBet)}`
+    : `${window.location.origin}/demo-game.html?game=${encodeURIComponent(slug)}&bet=${encodeURIComponent(selectedDemoBet)}`;
   window.open(target, '_blank');
   gameOverlay.classList.remove('visible');
 });
