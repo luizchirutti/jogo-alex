@@ -44,6 +44,8 @@
 
       .slot-cell::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 8, 16, .08), rgba(3, 8, 16, .72)); pointer-events: none; }
       .symbol-label { position: relative; z-index: 1; padding: 5px 8px; border: 1px solid rgba(255,255,255,.3); border-radius: 7px; background: rgba(5, 11, 20, .58); color: #fff4c2; font-size: clamp(.58rem, 1.5vw, .78rem); font-weight: 900; letter-spacing: .12em; text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+      .pay-symbol { padding-left: 10px; border-left: 3px solid currentColor; color: #f8d98a; font-weight: 700; }
+      .pay-orange { color: #fb923c; } .pay-fire { color: #f87171; } .pay-envelope { color: #fb7185; } .pay-coins { color: #facc15; } .pay-jade { color: #34d399; } .pay-gold { color: #fbbf24; } .pay-wild { color: #f59e0b; }
 
       .slot-cell[data-symbol="orange"] { --glow: rgba(251,146,60,0.35); }
       .slot-cell[data-symbol="fire"] { --glow: rgba(248,113,113,0.4); }
@@ -231,13 +233,13 @@
           <div class="rounded-2xl border border-red-500/20 bg-black/20 p-4">
             <p class="text-[10px] uppercase tracking-[0.25rem] text-yellow-200/70">Paytable (3 na linha)</p>
             <div class="mt-3 space-y-2 text-sm">
-              <div class="flex items-center justify-between"><span>🍊 Tangerina</span><strong>1.5x</strong></div>
-              <div class="flex items-center justify-between"><span>🧨 Fogos</span><strong>2.5x</strong></div>
-              <div class="flex items-center justify-between"><span>✉️ Envelope</span><strong>3.5x</strong></div>
-              <div class="flex items-center justify-between"><span>💰 Moedas</span><strong>5.5x</strong></div>
-              <div class="flex items-center justify-between"><span>🗿 Jade</span><strong>7.5x</strong></div>
-              <div class="flex items-center justify-between"><span>🥇 Ouro</span><strong>10.5x</strong></div>
-              <div class="flex items-center justify-between"><span>🐯 Tiger Wild</span><strong>18x</strong></div>
+              <div class="flex items-center justify-between"><span class="pay-symbol pay-orange">Tangerina</span><strong>1.5x</strong></div>
+              <div class="flex items-center justify-between"><span class="pay-symbol pay-fire">Fogos</span><strong>2.5x</strong></div>
+              <div class="flex items-center justify-between"><span class="pay-symbol pay-envelope">Envelope</span><strong>3.5x</strong></div>
+              <div class="flex items-center justify-between"><span class="pay-symbol pay-coins">Moedas</span><strong>5.5x</strong></div>
+              <div class="flex items-center justify-between"><span class="pay-symbol pay-jade">Jade</span><strong>7.5x</strong></div>
+              <div class="flex items-center justify-between"><span class="pay-symbol pay-gold">Ouro</span><strong>10.5x</strong></div>
+              <div class="flex items-center justify-between"><span class="pay-symbol pay-wild">Tiger Wild</span><strong>18x</strong></div>
             </div>
             <p class="mt-3 text-[11px] leading-relaxed text-red-100/60">Valores multiplicam a aposta por linha vencedora. Grade cheia paga 10x o total das linhas.</p>
           </div>
