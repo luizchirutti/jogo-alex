@@ -226,7 +226,7 @@ button {
 
 .hero-copy h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.6rem); line-height: .95; letter-spacing: -.04em; }
 .hero-copy p { max-width: 390px; margin: 0 0 8px; color: #c0d0e2; font-size: .9rem; }
-.hero-art { min-height: 240px; background: linear-gradient(90deg, rgba(7,16,27,.35), transparent), url('assets/games/fortune-tiger.svg') center/cover; filter: saturate(1.1); }
+.hero-art { min-height: 240px; background: linear-gradient(90deg, rgba(7,16,27,.35), transparent), url('assets/games/fortune-tiger.png') center/cover; filter: saturate(1.1); }
 
 .nav-link {
   background: transparent;

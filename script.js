@@ -118,12 +118,12 @@ const providerTabs = [
 
 const sections = {
   Quente: [
-    { title: 'Fortune Tiger', badge: 'Destaque', slug: 'fortune-tiger', rtp: '96.8%', art: 'assets/games/fortune-tiger.svg', theme: 'tiger' },
-    { title: 'Neon Dice', badge: 'Novo', slug: 'neon-dice', rtp: '97.1%', art: 'assets/games/neon-dice.svg', theme: 'neon' },
+    { title: 'Fortune Tiger', badge: 'Destaque', slug: 'fortune-tiger', rtp: '96.8%', art: 'assets/games/fortune-tiger.png', theme: 'tiger' },
+    { title: 'Neon Dice', badge: 'Novo', slug: 'neon-dice', rtp: '97.1%', art: 'assets/games/neon-dice.png', theme: 'neon' },
     { title: 'Moon Crash', badge: 'Novo', slug: 'moon-crash', rtp: '96.4%', art: 'assets/games/moon-crash.svg', theme: 'moon' },
     { title: 'Gem Forge', badge: 'Demo', slug: 'gem-forge', rtp: '96.9%', art: 'assets/games/gem-forge.svg', theme: 'gem' },
-    { title: 'Rocket Rumble', badge: 'Demo', slug: 'rocket-rumble', rtp: '97.3%', art: 'assets/games/rocket-rumble.svg', theme: 'rocket' },
-    { title: 'Lucky Lantern', badge: 'Novo', slug: 'lucky-lantern', rtp: '96.7%', art: 'assets/games/lucky-lantern.svg', theme: 'lantern' }
+    { title: 'Rocket Rumble', badge: 'Demo', slug: 'rocket-rumble', rtp: '97.3%', art: 'assets/games/rocket-rumble.png', theme: 'rocket' },
+    { title: 'Lucky Lantern', badge: 'Novo', slug: 'lucky-lantern', rtp: '96.7%', art: 'assets/games/lucky-lantern.png', theme: 'lantern' }
   ]
 };
 
