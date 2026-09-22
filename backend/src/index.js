@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import FortuneTigerEngine from './fortuneTigerEngine.js';
 import JadeCascadeEngine from './jadeCascadeEngine.js';
 import OlympusAscendEngine from './olympusAscendEngine.js';
+import { FestivalEngine, FESTIVAL_GAMES } from './festivalEngine.js';
+import { CascadeRealmEngine, CASCADE_REALMS } from './cascadeRealmsEngine.js';
+import { GLOBAL_GAMES } from './globalGames.js';
 import { supabase } from './config/supabase.js';
 
 dotenv.config();
@@ -92,7 +95,10 @@ app.get('/health', (req, res) => {
 
 const API_GAMES = {
   'jade-cascade': JadeCascadeEngine,
-  'olympus-ascend': OlympusAscendEngine
+  'olympus-ascend': OlympusAscendEngine,
+  ...Object.fromEntries(Object.keys(FESTIVAL_GAMES).map((id) => [id, class FestivalGame extends FestivalEngine { constructor() { super(FESTIVAL_GAMES[id]); } }])),
+  ...Object.fromEntries(Object.keys(CASCADE_REALMS).map((id) => [id, class CascadeRealmGame extends CascadeRealmEngine { constructor() { super(CASCADE_REALMS[id]); } }])),
+  ...Object.fromEntries(Object.keys(GLOBAL_GAMES).map((id) => [id, class GlobalGame extends FestivalEngine { constructor() { super(GLOBAL_GAMES[id]); } }]))
 };
 
 const apiUser = async (req, res) => {

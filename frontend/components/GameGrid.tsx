@@ -63,6 +63,24 @@ const jogosExemplo: Game[] = [
     url: "https://example.com/royal-vegas",
     categoria: "Ao Vivo",
   },
+  { id: 7, nome: "Crimson Tiger Festival", imagem: "", tag: "NOVO", url: "/games/crimson-tiger", categoria: "Slots" },
+  { id: 8, nome: "Golden Horn Vault", imagem: "", tag: "NOVO", url: "/games/golden-horn", categoria: "Slots" },
+  { id: 9, nome: "Imperial Mouse Parade", imagem: "", tag: "NOVO", url: "/games/imperial-mouse", categoria: "Slots" },
+  { id: 10, nome: "Neon Hare Rush", imagem: "", tag: "NOVO", url: "/games/neon-hare", categoria: "Slots" },
+  { id: 11, nome: "Jade Sky Dragon", imagem: "", tag: "NOVO", url: "/games/jade-sky-dragon", categoria: "Slots" },
+  { id: 12, nome: "Jade Crown Mahjong", imagem: "", tag: "NOVO", url: "/games/jade-crown", categoria: "Slots" },
+  { id: 13, nome: "Ember Dragon Vault", imagem: "", tag: "NOVO", url: "/games/ember-dragon-vault", categoria: "Slots" },
+  { id: 14, nome: "Qilin Skyfall", imagem: "", tag: "NOVO", url: "/games/qilin-skyfall", categoria: "Slots" },
+  { id: 15, nome: "Caishen Horizon", imagem: "", tag: "NOVO", url: "/games/caishen-horizon", categoria: "Slots" },
+  { id: 16, nome: "Marigold Outlaws", imagem: "", tag: "NOVO", url: "/games/marigold-outlaws", categoria: "Slots" },
+  { id: 17, nome: "Cloverwood Gold", imagem: "", tag: "NOVO", url: "/games/cloverwood-gold", categoria: "Slots" },
+  { id: 18, nome: "Lotus Sanctuary", imagem: "", tag: "NOVO", url: "/games/lotus-sanctuary", categoria: "Slots" },
+  { id: 19, nome: "Stormwake Captain", imagem: "", tag: "NOVO", url: "/games/stormwake-captain", categoria: "Slots" },
+  { id: 20, nome: "Coral Wave Riders", imagem: "", tag: "NOVO", url: "/games/coral-wave-riders", categoria: "Slots" },
+  { id: 21, nome: "Rune Fjord", imagem: "", tag: "NOVO", url: "/games/rune-fjord", categoria: "Slots" },
+  { id: 22, nome: "Gorgon Nightfall", imagem: "", tag: "NOVO", url: "/games/gorgon-nightfall", categoria: "Slots" },
+  { id: 23, nome: "Shaolin Strikers", imagem: "", tag: "NOVO", url: "/games/shaolin-strikers", categoria: "Slots" },
+  { id: 24, nome: "Lemur Fruit Caravan", imagem: "", tag: "NOVO", url: "/games/lemur-fruit-caravan", categoria: "Slots" },
 ];
 
 export function GameGrid({ games = jogosExemplo }: { games?: Game[] }) {
@@ -126,7 +144,7 @@ export function GameGrid({ games = jogosExemplo }: { games?: Game[] }) {
                 />
               ) : (
                 <div className={`flex h-30 items-center justify-center overflow-hidden text-5xl transition-transform duration-300 group-hover:scale-105 sm:h-36 lg:h-40 ${jogo.id === 2 ? "bg-[radial-gradient(circle_at_30%_25%,#f6d67a_0_6%,transparent_7%),linear-gradient(135deg,#064e3b,#0f766e_55%,#ca8a04)]" : "bg-[radial-gradient(circle_at_70%_20%,#fff5c4_0_5%,transparent_6%),linear-gradient(135deg,#172554,#4338ca_55%,#c0841a)]"}`} aria-label={`Arte original de ${jogo.nome}`}>
-                  {jogo.id === 2 ? "🀄" : "⚡"}
+                  {jogo.id === 2 || jogo.id === 12 ? "🀄" : jogo.id === 7 ? "🐯" : jogo.id === 8 ? "🐂" : jogo.id === 9 ? "🐭" : jogo.id === 10 ? "🐰" : jogo.id === 11 || jogo.id === 13 ? "🐲" : jogo.id === 14 ? "🦄" : jogo.id === 15 ? "🧧" : jogo.id === 16 ? "💀" : jogo.id === 17 ? "☘️" : jogo.id === 18 ? "🪷" : jogo.id === 19 ? "🏴‍☠️" : jogo.id === 20 ? "🌊" : jogo.id === 21 ? "ᚱ" : jogo.id === 22 ? "🐍" : jogo.id === 23 ? "⚽" : jogo.id === 24 ? "🐒" : "⚡"}
                 </div>
               )}
             </div>
