@@ -111,6 +111,8 @@ insert into public.admin_settings (key, value) values
 
 insert into public.games (name, type, category, rtp, enabled, config) values
   ('Lucky Spin', 'slot', 'casino', 96.80, true, '{"theme": "classic"}'),
+  ('Jade Cascade', 'slot', 'casino', 96.50, true, '{"theme": "chinese-tiles", "grid": "4x4", "mechanic": "cascade", "provider": "proprietary"}'),
+  ('Olympus Ascend', 'slot', 'casino', 96.50, true, '{"theme": "greek-myth", "grid": "6x5", "mechanic": "cluster-pays", "provider": "proprietary"}'),
   ('Crash Prime', 'crash', 'casino', 97.20, true, '{"multiplier": 2.5}'),
   ('Dice Rush', 'dice', 'casino', 95.90, true, '{"range": [1, 100]}');
 
@@ -131,8 +133,8 @@ alter table public.bonuses enable row level security;
 alter table public.admin_settings enable row level security;
 alter table public.audit_logs enable row level security;
 
-drop policy if exists "Users can update own profile" on public.users;
 create policy "Users can read own profile" on public.users for select using (auth.uid() = id);
+create policy "Users can update own profile" on public.users for update using (auth.uid() = id);
 create policy "Wallet read own" on public.wallets for select using (auth.uid() = user_id);
 create policy "Wallet update own" on public.wallets for update using (auth.uid() = user_id);
 create policy "Transactions read own" on public.transactions for select using (auth.uid() = user_id);

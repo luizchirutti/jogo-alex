@@ -1,77 +1,10 @@
-const API_BASE = window.JOGO_ALEX_API_BASE || 'http://localhost:4000';
-const isHostedDemo = window.location.hostname !== 'localhost' && !window.JOGO_ALEX_API_BASE;
+const validCredentials = {
+  phone: '11986468935',
+  password: 'Teste123*'
+};
+
+const API_BASE = 'http://localhost:4000';
 let appSession = null;
-let authenticatedUser = null;
-let authMode = 'login';
-
-function formatCurrency(value) {
-  return `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  })[character]);
-}
-
-function getDemoAccounts() {
-  return JSON.parse(localStorage.getItem('jogo-alex-demo-accounts') || '[]');
-}
-
-function saveDemoAccounts(accounts) {
-  localStorage.setItem('jogo-alex-demo-accounts', JSON.stringify(accounts));
-}
-
-function getDemoAdminUsers() {
-  return [
-    { name: 'Ana Demo', email: 'ana.demo@jogoalex.local', status: 'active', wallet: { balance: 1280.5 } },
-    { name: 'Bruno Demo', email: 'bruno.demo@jogoalex.local', status: 'active', wallet: { balance: 745.25 } },
-    { name: 'Carla Demo', email: 'carla.demo@jogoalex.local', status: 'pending', wallet: { balance: 0 } }
-  ];
-}
-
-function openHostedAdminDemo() {
-  if (!isHostedDemo) {
-    window.alert('O painel demonstrativo está disponível apenas na apresentação hospedada.');
-    return;
-  }
-
-  authenticatedUser = { name: 'Painel do investidor', email: 'admin.demo@jogoalex.local', role: 'admin', balance: 0 };
-  localStorage.setItem('jogo-alex-demo-session', JSON.stringify(authenticatedUser));
-  closeLogin();
-  openDrawer('admin');
-}
-
-function applyAuthenticatedUser(user) {
-  authenticatedUser = user;
-  document.body.classList.add('is-authenticated');
-  const userBalance = document.querySelector('#userPanel .user-balance strong');
-  if (userBalance) userBalance.textContent = formatCurrency(user.balance || 0);
-  const userPanel = document.getElementById('userPanel');
-  if (userPanel) userPanel.setAttribute('title', user.name || user.email || 'Jogador');
-}
-
-function authenticateHostedDemo({ email, password, name }) {
-  const accounts = getDemoAccounts();
-  let account = accounts.find((item) => item.email === email);
-
-  if (authMode === 'register') {
-    if (account) throw new Error('Já existe uma conta demo com este acesso. Entre para continuar.');
-    account = { email, name, password, balance: 250, role: 'player' };
-    accounts.push(account);
-    saveDemoAccounts(accounts);
-  } else if (!account || account.password !== password) {
-    throw new Error('Conta demo não encontrada ou senha incorreta. Crie uma conta para continuar.');
-  }
-
-  localStorage.setItem('jogo-alex-demo-session', JSON.stringify(account));
-  applyAuthenticatedUser(account);
-  return account;
-}
 
 function normalizeIdentifierToEmail(value) {
   const candidate = String(value || '').trim();
@@ -113,17 +46,17 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 const providerTabs = [
-  { id: 'Quente', label: 'Em destaque' }
+  { id: 'Quente', label: '🎰 Jogos' }
 ];
 
 const sections = {
   Quente: [
-    { title: 'Fortune Tiger', badge: 'Destaque', slug: 'fortune-tiger', rtp: '96.8%', art: 'assets/games/fortune-tiger.png', theme: 'tiger' },
-    { title: 'Neon Dice', badge: 'Novo', slug: 'neon-dice', rtp: '97.1%', art: 'assets/games/neon-dice.png', theme: 'neon' },
-    { title: 'Moon Crash', badge: 'Novo', slug: 'moon-crash', rtp: '96.4%', art: 'assets/games/moon-crash.svg', theme: 'moon' },
-    { title: 'Gem Forge', badge: 'Demo', slug: 'gem-forge', rtp: '96.9%', art: 'assets/games/gem-forge.png', theme: 'gem' },
-    { title: 'Rocket Rumble', badge: 'Demo', slug: 'rocket-rumble', rtp: '97.3%', art: 'assets/games/rocket-rumble.png', theme: 'rocket' },
-    { title: 'Lucky Lantern', badge: 'Novo', slug: 'lucky-lantern', rtp: '96.7%', art: 'assets/games/lucky-lantern.png', theme: 'lantern' }
+    { title: 'Fortune Tiger', badge: 'Real', art: 'fortune-tiger', url: 'fortune-tiger.html' },
+    { title: 'Neon Dice', badge: 'Demo', art: 'neon-dice', url: 'demo-game.html?game=neon-dice' },
+    { title: 'Moon Crash', badge: 'Demo', art: 'moon-crash', url: 'demo-game.html?game=moon-crash' },
+    { title: 'Gem Forge', badge: 'Demo', art: 'gem-forge', url: 'demo-game.html?game=gem-forge' },
+    { title: 'Rocket Rumble', badge: 'Demo', art: 'rocket-rumble', url: 'demo-game.html?game=rocket-rumble' },
+    { title: 'Lucky Lantern', badge: 'Demo', art: 'lucky-lantern', url: 'demo-game.html?game=lucky-lantern' }
   ]
 };
 
@@ -132,13 +65,8 @@ const loginModal = document.getElementById('loginModal');
 const loginButton = document.getElementById('loginButton');
 const phoneInput = document.getElementById('phoneInput');
 const passwordInput = document.getElementById('passwordInput');
-const nameInput = document.getElementById('nameInput');
-const nameField = document.getElementById('nameField');
-const authTitle = document.getElementById('authTitle');
 const loginError = document.getElementById('loginError');
-const authModeButton = document.getElementById('authModeButton');
-const openAdminDemo = document.getElementById('openAdminDemo');
-const openAdminDemoTop = document.getElementById('openAdminDemoTop');
+const quickFill = document.getElementById('quickFill');
 const openLoginBtn = document.getElementById('openLogin');
 const closeLoginBtn = document.getElementById('closeLogin');
 const openRegisterBtn = document.getElementById('openRegister');
@@ -163,14 +91,6 @@ let adminSettings = {
   gameBoost: 1.2
 };
 
-if (isHostedDemo) {
-  try {
-    adminSettings = { ...adminSettings, ...JSON.parse(localStorage.getItem('jogo-alex-demo-settings') || '{}') };
-  } catch (error) {
-    localStorage.removeItem('jogo-alex-demo-settings');
-  }
-}
-
 async function loadAdminSettings() {
   if (!appSession?.access_token) return;
 
@@ -184,27 +104,7 @@ async function loadAdminSettings() {
   }
 }
 
-async function loadAdminUsers() {
-  if (!appSession?.access_token) return [];
-
-  try {
-    const response = await apiRequest('/admin/users');
-    return response?.data || [];
-  } catch (error) {
-    console.warn('Não foi possível carregar usuários do admin:', error.message);
-    return [];
-  }
-}
-
 async function saveAdminSettings() {
-  if (isHostedDemo) {
-    localStorage.setItem('jogo-alex-demo-settings', JSON.stringify(adminSettings));
-    activities.unshift({ icon: '⚙️', title: 'Regras salvas', detail: 'Configuração local da demo', time: 'Agora', amount: `RTP: ${adminSettings.payoutRate}%` });
-    renderActivity();
-    window.alert('Configurações salvas apenas nesta demonstração.');
-    return;
-  }
-
   if (!appSession?.access_token) {
     window.alert('Faça login antes de salvar as regras de administração.');
     return;
@@ -257,16 +157,11 @@ function renderActivity() {
   `).join('');
 }
 
-function renderAdminConfig(users = []) {
-  const totalBalance = users.reduce((total, user) => total + Number(user.wallet?.balance || 0), 0);
-  const userRows = users.length
-    ? users.map((user) => `<tr><td>${escapeHtml(user.name || 'Jogador')}</td><td>${escapeHtml(user.email || '-')}</td><td>${formatCurrency(user.wallet?.balance || 0)}</td><td>${escapeHtml(user.status || 'active')}</td></tr>`).join('')
-    : '<tr><td colspan="4">Nenhum usuário conectado ainda.</td></tr>';
-
+function renderAdminConfig() {
   return `
     <div class="admin-grid">
-      <div><span>Usuários cadastrados</span><strong>${users.length}</strong></div>
-      <div><span>Saldo agregado</span><strong>${formatCurrency(totalBalance)}</strong></div>
+      <div><span>Usuários demo</span><strong>128</strong></div>
+      <div><span>Sessões ativas</span><strong>24</strong></div>
       <div><span>Jogos no catálogo</span><strong>${Object.values(sections).flat().length}</strong></div>
       <div><span>Gateway</span><strong>Pendente</strong></div>
     </div>
@@ -304,52 +199,25 @@ function renderAdminConfig(users = []) {
       <span>VIP habilitada</span>
       <button class="switch ${adminSettings.vipAccess ? 'on' : ''}" data-toggle="vipAccess" aria-label="VIP habilitada"><span></span></button>
     </div>
-    <div class="demo-callout">${isHostedDemo ? 'Painel demonstrativo local: dados fictícios e configurações salvas apenas neste navegador.' : 'Painel conectado às configurações do backend. Pagamentos e métricas financeiras ainda não estão ativos.'}</div>
-    <div class="admin-table-wrap"><h3>Usuários e saldos</h3><table class="admin-table"><thead><tr><th>Nome</th><th>E-mail</th><th>Saldo</th><th>Status</th></tr></thead><tbody>${userRows}</tbody></table></div>
+    <div class="demo-callout">Estas configurações ficam em memória do navegador e simulam o painel administrativo de uma casa de apostas. Sem gateway, chaves ou fins de produção.</div>
     <button class="primary-button wide" data-action="saveAdminConfig">Salvar regras</button>
   `;
 }
 
-async function openDrawer(view) {
-  if (view === 'admin' && authenticatedUser?.role !== 'admin') {
-    window.alert('Acesso restrito ao administrador.');
-    return;
-  }
-
-  let adminUsers = [];
-  if (view === 'admin') {
-    await loadAdminSettings();
-    adminUsers = await loadAdminUsers();
-    if (!adminUsers.length && isHostedDemo) adminUsers = getDemoAdminUsers();
-  }
-
+function openDrawer(view) {
   const content = {
     account: {
       eyebrow: 'Carteira fictícia', title: 'Minha conta', html: `
-        <div class="balance-card"><span>Saldo disponível</span><strong>${formatCurrency(authenticatedUser?.balance || 0)}</strong><small>Valor ilustrativo, sem movimentação real</small></div>
+        <div class="balance-card"><span>Saldo disponível</span><strong>R$ 2.480,90</strong><small>Valor ilustrativo, sem movimentação real</small></div>
         <div class="drawer-actions"><button class="primary-button" data-view="deposit">Depositar</button><button class="ghost-button" data-view="withdraw">Sacar</button></div>
         <h3>Resumo</h3><div class="summary-row"><span>Bônus de demonstração</span><b>R$ 100,00</b></div><div class="summary-row"><span>Saldo utilizado</span><b>R$ 0,00</b></div>
-        <button class="secondary-button wide" data-view="history">Abrir histórico</button>${authenticatedUser?.role === 'admin' ? '<button class="secondary-button wide" data-view="admin">Painel administrativo</button>' : ''}`
+        <button class="secondary-button wide" data-view="history">Abrir histórico</button><button class="secondary-button wide" data-view="admin">Painel administrativo</button>`
     },
-    deposit: isHostedDemo ? {
-      eyebrow: 'Modo demonstração', title: 'Depósito', html: `<div class="demo-callout">Nenhum pagamento será processado nesta versão. Este crédito usa a API interna apenas para demonstrar o fluxo da carteira.</div><label class="field"><span>Valor ilustrativo</span><input type="number" value="100" min="1" /></label><button class="primary-button wide" data-action="demoDeposit">Simular crédito</button>`
-    } : {
-      eyebrow: 'Pix', title: 'Depósito', html: `
-        <label class="field"><span>Valor do depósito (R$)</span><input type="number" id="pixDepositAmount" value="50" min="1" step="0.01" /></label>
-        <label class="field"><span>Nome completo</span><input type="text" id="pixDepositName" value="${escapeHtml(authenticatedUser?.name || '')}" /></label>
-        <label class="field"><span>CPF ou CNPJ</span><input type="text" id="pixDepositDocument" placeholder="Somente números" /></label>
-        <button class="primary-button wide" data-action="pixDeposit">Gerar Pix</button>
-        <p class="muted-copy">Você recebe um Pix copia-e-cola para pagar. O saldo é creditado automaticamente quando o pagamento for confirmado.</p>`
+    deposit: {
+      eyebrow: 'Modo demonstração', title: 'Depósito', html: `<div class="demo-callout">Nenhum pagamento será processado nesta versão. O gateway será conectado somente após a definição da API autorizada.</div><label class="field"><span>Valor ilustrativo</span><input type="number" value="100" min="1" /></label><button class="primary-button wide" data-action="demoDeposit">Simular crédito</button>`
     },
-    withdraw: isHostedDemo ? {
+    withdraw: {
       eyebrow: 'Modo demonstração', title: 'Saque', html: `<div class="demo-callout">Dados bancários não são solicitados neste protótipo. Esta tela apenas representa o fluxo futuro.</div><label class="field"><span>Valor ilustrativo</span><input type="number" value="50" min="1" /></label><button class="primary-button wide" data-action="demoWithdraw">Simular solicitação</button>`
-    } : {
-      eyebrow: 'Pix', title: 'Saque', html: `
-        <label class="field"><span>Valor do saque (R$)</span><input type="number" id="pixWithdrawAmount" value="50" min="1" step="0.01" /></label>
-        <label class="field"><span>Tipo de chave Pix</span><select id="pixWithdrawKeyType"><option value="cpf">CPF</option><option value="cnpj">CNPJ</option><option value="email">E-mail</option><option value="telefone">Telefone</option><option value="aleatoria">Chave aleatória</option></select></label>
-        <label class="field"><span>Chave Pix</span><input type="text" id="pixWithdrawKeyValue" placeholder="Conforme o tipo escolhido" /></label>
-        <button class="primary-button wide" data-action="pixWithdraw">Solicitar saque</button>
-        <p class="muted-copy">O valor é reservado imediatamente. Você recebe a confirmação assim que o Pix for processado.</p>`
     },
     promotions: {
       eyebrow: 'Benefícios fictícios', title: 'Promoções', html: `<div class="offer-card"><span class="offer-tag">NOVO</span><h3>Boas-vindas</h3><p>R$ 100 em saldo demonstrativo para explorar a interface.</p><button class="primary-button small" data-action="claimOffer">Reservar oferta</button></div><div class="offer-card"><span class="offer-tag">CASHBACK</span><h3>Jogue com responsabilidade</h3><p>Experimente o catálogo sem dinheiro real e sem integração externa.</p></div>`
@@ -361,7 +229,7 @@ async function openDrawer(view) {
       eyebrow: 'Somente leitura', title: 'Histórico', html: `<div class="drawer-history">${activities.map((item) => `<div class="summary-row"><span>${item.icon} ${item.title}</span><b>${item.amount}</b></div>`).join('')}</div><p class="muted-copy">Todos os registros são criados no navegador e podem ser apagados ao recarregar a página.</p>`
     },
     admin: {
-      eyebrow: 'Painel local', title: 'Administração', html: renderAdminConfig(adminUsers)
+      eyebrow: 'Painel local', title: 'Administração', html: renderAdminConfig()
     }
   }[view] || null;
   if (!content) return;
@@ -377,18 +245,18 @@ function closeDrawer() {
   drawerOverlay.setAttribute('aria-hidden', 'true');
 }
 
+let activeGame = null;
+
 function openGame(game) {
+  activeGame = game;
   gameModalTitle.textContent = game.title;
   gameModalBadge.textContent = game.badge;
-  gameResult.textContent = 'Demo pronta para explorar no navegador.';
+  gameResult.textContent = game.badge === 'Real'
+    ? 'Jogo real em desenvolvimento e conectado ao backend.'
+    : 'Jogo de demonstração, saldo e resultados são fictícios.';
   startDemoGameButton.textContent = `Abrir ${game.title}`;
-  startDemoGameButton.dataset.slug = game.slug;
-  document.querySelector('.muted-copy').textContent = 'Experiência demonstrativa com saldo fictício. Nenhuma aposta ou conexão externa é realizada.';
   const previewArt = document.getElementById('gamePreviewArt');
-  previewArt.style.backgroundImage = `linear-gradient(90deg, rgba(7, 16, 27, .2), rgba(7, 16, 27, .05)), url("${game.art}")`;
-  previewArt.style.backgroundPosition = 'center';
-  previewArt.style.backgroundSize = 'cover';
-  previewArt.setAttribute('aria-label', `Arte de ${game.title}`);
+  previewArt.style.backgroundImage = `url('assets/games/${game.art}.png')`;
   gameOverlay.classList.add('visible');
   gameOverlay.setAttribute('aria-hidden', 'false');
 }
@@ -418,13 +286,13 @@ function renderGames() {
     grid.innerHTML = items
       .map(
         (game) => `
-          <article class="game-card game-card-${game.theme}" aria-label="${game.title}">
-            <img class="game-art" src="${game.art}" alt="Arte temática de ${game.title}" loading="lazy" />
+          <article class="game-card" aria-label="${game.title}">
+            <div class="game-art" style="background-image: url('assets/games/${game.art}.png')"></div>
             <div class="game-content">
-                <span class="game-badge">${game.badge}</span>
+              <span class="game-badge">${game.badge}</span>
               <h3 class="game-title">${game.title}</h3>
               <div class="game-meta">
-                  <span>RTP ${game.rtp || '96.8%'}</span>
+                <span>RTP 96.8%</span>
                 <span>Play</span>
               </div>
             </div>
@@ -444,16 +312,6 @@ function showLogin() {
   phoneInput.focus();
 }
 
-function setAuthMode(mode) {
-  authMode = mode;
-  const registering = mode === 'register';
-  authTitle.textContent = registering ? 'Criar conta' : 'Entrar';
-  loginButton.textContent = registering ? 'Criar conta' : 'Entrar';
-  authModeButton.textContent = registering ? 'Já tenho uma conta' : 'Criar uma conta';
-  nameField.hidden = !registering;
-  loginError.textContent = '';
-}
-
 function closeLogin() {
   loginModal.classList.remove('visible');
   loginModal.setAttribute('aria-hidden', 'true');
@@ -467,9 +325,17 @@ async function loadAuthenticatedState() {
     const walletData = await apiRequest('/wallet/balance');
     const userName = profileData?.user?.name || profileData?.user?.email || 'Jogador';
     const balance = walletData?.data?.balance ?? 0;
-    authenticatedUser = profileData?.user || null;
 
-    applyAuthenticatedUser({ ...profileData.user, name: userName, balance });
+    document.body.classList.add('is-authenticated');
+    const userBalance = document.querySelector('#userPanel .user-balance strong');
+    if (userBalance) {
+      userBalance.textContent = `R$ ${Number(balance).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    const userPanel = document.getElementById('userPanel');
+    if (userPanel) {
+      userPanel.setAttribute('title', userName);
+    }
 
     const formName = document.querySelector('#loginModal h2');
     if (formName) {
@@ -483,15 +349,9 @@ async function loadAuthenticatedState() {
 async function authenticate() {
   const rawPhone = phoneInput.value.trim();
   const password = passwordInput.value.trim();
-  const name = nameInput.value.trim();
 
   if (!rawPhone || !password) {
     loginError.textContent = 'Informe seu e-mail ou telefone e a senha.';
-    return;
-  }
-
-  if (authMode === 'register' && !name) {
-    loginError.textContent = 'Informe seu nome para criar a conta.';
     return;
   }
 
@@ -502,27 +362,13 @@ async function authenticate() {
     return;
   }
 
-  if (isHostedDemo) {
-    try {
-      authenticateHostedDemo({ email, password, name });
-      closeLogin();
-    } catch (error) {
-      loginError.textContent = error.message;
-    }
-    return;
-  }
-
   try {
-    const endpoint = authMode === 'register' ? '/auth/register' : '/auth/login';
-    const payload = { email, phone: rawPhone, password };
-    if (authMode === 'register') payload.name = name;
-    const data = await apiRequest(endpoint, {
+    const data = await apiRequest('/auth/login', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ email, phone: rawPhone, password })
     });
 
     appSession = data.session;
-    if (appSession) localStorage.setItem('jogo-alex-session', JSON.stringify(appSession));
     await loadAuthenticatedState();
     closeLogin();
     loginError.textContent = '';
@@ -530,17 +376,41 @@ async function authenticate() {
     passwordInput.value = password;
     return;
   } catch (error) {
-    loginError.textContent = error.message || 'Não foi possível concluir a autenticação.';
+    try {
+      const created = await apiRequest('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email,
+          phone: rawPhone,
+          password,
+          name: rawPhone || 'Jogador Demo'
+        })
+      });
+
+      appSession = created.session;
+      await loadAuthenticatedState();
+      closeLogin();
+      loginError.textContent = '';
+      phoneInput.value = rawPhone;
+      passwordInput.value = password;
+      return;
+    } catch (registerError) {
+      loginError.textContent = 'Credenciais inválidas ou backend indisponível. Use outro acesso.';
+      return;
+    }
   }
 }
 
-openLoginBtn.addEventListener('click', () => { setAuthMode('login'); showLogin(); });
+openLoginBtn.addEventListener('click', showLogin);
 closeLoginBtn.addEventListener('click', closeLogin);
-openRegisterBtn.addEventListener('click', () => { setAuthMode('register'); showLogin(); });
-authModeButton.addEventListener('click', () => setAuthMode(authMode === 'login' ? 'register' : 'login'));
-openAdminDemo.addEventListener('click', openHostedAdminDemo);
-openAdminDemoTop.addEventListener('click', openHostedAdminDemo);
+openRegisterBtn.addEventListener('click', showLogin);
 loginButton.addEventListener('click', () => authenticate());
+quickFill.addEventListener('click', () => {
+  phoneInput.value = validCredentials.phone;
+  passwordInput.value = validCredentials.password;
+  loginError.textContent = '';
+  phoneInput.focus();
+});
 
 passwordInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') authenticate();
@@ -561,8 +431,7 @@ document.addEventListener('click', (event) => {
     return;
   }
 
-  const actionEl = event.target.closest('[data-action]');
-  const action = actionEl?.dataset.action;
+  const action = event.target.closest('[data-action]')?.dataset.action;
   const toggle = event.target.closest('[data-toggle]');
 
   if (toggle) {
@@ -573,133 +442,12 @@ document.addEventListener('click', (event) => {
   }
 
   if (!action) return;
-  if (action === 'demoDeposit') {
-    const amountInput = drawerContent.querySelector('input[type="number"]');
-    const amount = Number(amountInput?.value || 0);
-    if (!appSession?.access_token && !isHostedDemo) {
-      window.alert('Entre na conta para simular um crédito na carteira.');
-      return;
-    }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      window.alert('Informe um valor maior que zero.');
-      return;
-    }
-    const applyDemoDeposit = (response) => {
-      const formattedAmount = Number(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-      activities.unshift({ icon: '💳', title: 'Crédito simulado', detail: 'Registrado na carteira demo', time: 'Agora', amount: `+ R$ ${formattedAmount}` });
-      renderActivity();
-      const balance = response?.balance ?? response?.wallet?.balance ?? 0;
-      authenticatedUser.balance = Number(balance);
-      const userBalance = document.querySelector('#userPanel .user-balance strong');
-      if (userBalance) userBalance.textContent = formatCurrency(balance);
-      closeDrawer();
-    };
-
-    if (isHostedDemo) {
-      authenticatedUser.balance = Number(authenticatedUser.balance || 0) + amount;
-      const accounts = getDemoAccounts().map((account) => account.email === authenticatedUser.email ? authenticatedUser : account);
-      saveDemoAccounts(accounts);
-      localStorage.setItem('jogo-alex-demo-session', JSON.stringify(authenticatedUser));
-      applyDemoDeposit({ balance: authenticatedUser.balance });
-      return;
-    }
-
-    apiRequest('/wallet/deposit', {
-      method: 'POST',
-      body: JSON.stringify({ amount })
-    }).then(applyDemoDeposit).catch((error) => window.alert(error.message || 'Não foi possível simular o crédito.'));
-  }
+  if (action === 'demoDeposit') { activities.unshift({ icon: '💳', title: 'Crédito simulado', detail: 'Operação local', time: 'Agora', amount: '+ R$ 100 fictícios' }); renderActivity(); }
   if (action === 'demoWithdraw') { activities.unshift({ icon: '↗', title: 'Saque simulado', detail: 'Nenhum dado enviado', time: 'Agora', amount: 'Aguardando gateway' }); renderActivity(); }
-  if (action === 'pixDeposit') {
-    if (!appSession?.access_token) {
-      window.alert('Entre na conta para gerar um Pix de depósito.');
-      return;
-    }
-    const amount = Number(document.getElementById('pixDepositAmount')?.value || 0);
-    const payerName = document.getElementById('pixDepositName')?.value.trim();
-    const payerDocument = document.getElementById('pixDepositDocument')?.value.replace(/\D/g, '');
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-      window.alert('Informe um valor maior que zero.');
-      return;
-    }
-    if (!payerDocument) {
-      window.alert('Informe o CPF ou CNPJ do pagador.');
-      return;
-    }
-
-    apiRequest('/payments/pix/deposits', {
-      method: 'POST',
-      body: JSON.stringify({ amount, payer_name: payerName, payer_document: payerDocument })
-    }).then((response) => {
-      const deposit = response.deposit;
-      activities.unshift({ icon: '💳', title: 'Pix gerado', detail: `Cobrança ${deposit.id}`, time: 'Agora', amount: formatCurrency(deposit.amountReais) });
-      renderActivity();
-      drawerContent.innerHTML = `
-        <div class="demo-callout">Pague o Pix abaixo. O saldo é creditado automaticamente após a confirmação.</div>
-        <label class="field"><span>Pix copia e cola</span><textarea class="pix-code" readonly rows="4">${escapeHtml(deposit.pix?.copiaECola || 'Aguardando geração do QR Code...')}</textarea></label>
-        <button class="secondary-button wide" data-action="pixDepositCheckStatus" data-deposit-id="${deposit.id}">Já paguei, verificar</button>`;
-    }).catch((error) => window.alert(error.message || 'Não foi possível gerar o Pix.'));
-  }
-  if (action === 'pixDepositCheckStatus') {
-    const depositId = actionEl.dataset.depositId;
-    apiRequest(`/payments/pix/deposits/${depositId}`).then((response) => {
-      const status = response.deposit?.status;
-      if (status === 'Concluida') {
-        window.alert('Pagamento confirmado! Saldo atualizado.');
-        loadAuthenticatedState();
-        closeDrawer();
-      } else {
-        window.alert(`Pagamento ainda não confirmado (estado atual: ${status}).`);
-      }
-    }).catch((error) => window.alert(error.message || 'Não foi possível verificar o pagamento.'));
-  }
-  if (action === 'pixWithdraw') {
-    if (!appSession?.access_token) {
-      window.alert('Entre na conta para solicitar um saque.');
-      return;
-    }
-    const amount = Number(document.getElementById('pixWithdrawAmount')?.value || 0);
-    const pixKeyType = document.getElementById('pixWithdrawKeyType')?.value;
-    const pixKeyValue = document.getElementById('pixWithdrawKeyValue')?.value.trim();
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-      window.alert('Informe um valor maior que zero.');
-      return;
-    }
-    if (!pixKeyValue) {
-      window.alert('Informe a chave Pix de destino.');
-      return;
-    }
-    if (!window.confirm(`Confirmar saque de ${formatCurrency(amount)} para a chave Pix informada? Essa ação não pode ser desfeita.`)) {
-      return;
-    }
-
-    apiRequest('/payments/pix/withdrawals', {
-      method: 'POST',
-      body: JSON.stringify({ amount, pix_key_type: pixKeyType, pix_key_value: pixKeyValue })
-    }).then((response) => {
-      if (response.pending_review) {
-        window.alert(response.message);
-      } else {
-        activities.unshift({ icon: '↗', title: 'Saque solicitado', detail: `Saque ${response.withdrawal.id}`, time: 'Agora', amount: formatCurrency(amount) });
-        renderActivity();
-        window.alert('Saque solicitado com sucesso. Acompanhe o status no histórico.');
-      }
-      if (typeof response.balance === 'number') {
-        authenticatedUser.balance = response.balance;
-        const userBalance = document.querySelector('#userPanel .user-balance strong');
-        if (userBalance) userBalance.textContent = formatCurrency(response.balance);
-      }
-      closeDrawer();
-    }).catch((error) => window.alert(error.message || 'Não foi possível solicitar o saque.'));
-  }
-  if (action === 'claimOffer') { activities.unshift({ icon: '🎁', title: 'Oferta reservada', detail: 'Bônus demonstrativo', time: 'Agora', amount: '+ R$ 100 fictícios' }); renderActivity(); }
+  if (action === 'claimOffer') activities.unshift({ icon: '🎁', title: 'Oferta reservada', detail: 'Bônus demonstrativo', time: 'Agora', amount: '+ R$ 100 fictícios' });
   if (action === 'supportMessage') window.alert('Demonstração: mensagem não enviada.');
   if (action === 'supportFaq') window.alert('Demonstração: FAQ em construção.');
   if (action === 'exportDemo') window.alert('Demonstração: relatório fictício pronto para exportação.');
-  if (action === 'comingSoonChannel') window.alert('Canal em breve nesta demonstração.');
-  if (action === 'forgotPassword') { event.preventDefault(); window.alert('Demonstração: recuperação de senha não está disponível neste protótipo.'); }
   if (action === 'saveAdminConfig') {
     document.querySelectorAll('[data-setting]').forEach((input) => {
       const key = input.dataset.setting;
@@ -720,24 +468,14 @@ document.querySelectorAll('.mini-action').forEach((button) => {
   if (action === 'Minha conta') button.addEventListener('click', () => openDrawer('account'));
   if (action === 'Ganhe R$100 de graça') button.addEventListener('click', () => openDrawer('promotions'));
   if (action === 'Suporte ao vivo') button.addEventListener('click', () => openDrawer('support'));
-  if (action === 'Mensagem') button.addEventListener('click', () => openDrawer('support'));
-  if (action === 'Ranking') button.addEventListener('click', () => window.alert('Ranking de jogadores em breve nesta demonstração.'));
-  if (action === 'Adicionar à tela inicial') button.addEventListener('click', () => window.alert('Use o menu do seu navegador (⋮ ou compartilhar) para adicionar esta página à tela inicial.'));
-});
-
-document.querySelector('[data-hero-game]')?.addEventListener('click', (event) => {
-  const featuredGame = sections.Quente.find((game) => game.slug === event.currentTarget.dataset.heroGame);
-  if (featuredGame) openGame(featuredGame);
 });
 
 document.querySelectorAll('.nav-link').forEach((button) => {
   button.addEventListener('click', () => {
     document.querySelectorAll('.nav-link').forEach((node) => node.classList.remove('active'));
     button.classList.add('active');
-    const label = button.textContent.trim();
-    if (label === 'Promoções') openDrawer('promotions');
-    if (label === 'Suporte') openDrawer('support');
-    if (label === 'Esportes' || label === 'Ao vivo') window.alert(`${label}: em construção nesta demonstração.`);
+    if (button.textContent.trim() === 'Promoções') openDrawer('promotions');
+    if (button.textContent.trim() === 'Suporte') openDrawer('support');
   });
 });
 
@@ -756,30 +494,14 @@ document.querySelectorAll('.bet-option').forEach((button) => {
 });
 
 startDemoGameButton.addEventListener('click', () => {
-  const slug = startDemoGameButton.dataset.slug || 'fortune-tiger';
-  const target = slug === 'fortune-tiger'
-    ? `${window.location.origin}/fortune-tiger.html?bet=${encodeURIComponent(selectedDemoBet)}`
-    : `${window.location.origin}/demo-game.html?game=${encodeURIComponent(slug)}&bet=${encodeURIComponent(selectedDemoBet)}`;
-  window.open(target, '_blank');
+  if (!activeGame) return;
+  const separator = activeGame.url.includes('?') ? '&' : '?';
+  window.open(`http://localhost:8000/${activeGame.url}${separator}bet=${selectedDemoBet}`, '_blank');
   gameOverlay.classList.remove('visible');
 });
 
 createTabs();
 renderGames();
 renderActivity();
-const storedSession = localStorage.getItem('jogo-alex-session');
-const storedDemoSession = localStorage.getItem('jogo-alex-demo-session');
-if (isHostedDemo && storedDemoSession) {
-  try {
-    applyAuthenticatedUser(JSON.parse(storedDemoSession));
-  } catch (error) {
-    localStorage.removeItem('jogo-alex-demo-session');
-  }
-} else if (storedSession) {
-  try {
-    appSession = JSON.parse(storedSession);
-    loadAuthenticatedState();
-  } catch (error) {
-    localStorage.removeItem('jogo-alex-session');
-  }
-}
+loadAdminSettings();
+showLogin();

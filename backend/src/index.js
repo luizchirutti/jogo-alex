@@ -1,11 +1,13 @@
 import express from 'express';
 import cors from 'cors';
-import 'dotenv/config';
+import dotenv from 'dotenv';
 
-import FortuneTigerEngine from '../../GameEngine.js';
+import FortuneTigerEngine from './fortuneTigerEngine.js';
+import JadeCascadeEngine from './jadeCascadeEngine.js';
+import OlympusAscendEngine from './olympusAscendEngine.js';
 import { supabase } from './config/supabase.js';
-import { gatewayClient } from './gateway/auravertaClient.js';
-import { createPaymentsRouter, reconcileDeposit, reconcileWithdrawal } from './routes/payments.js';
+
+dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -22,20 +24,6 @@ const getAuthenticatedUser = async (req) => {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user) return null;
   return data.user;
-};
-
-const getAdminUser = async (req) => {
-  const user = await getAuthenticatedUser(req);
-  if (!user) return null;
-
-  const { data: userRow, error } = await supabase
-    .from('users')
-    .select('role, status')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  if (error || userRow?.role !== 'admin' || userRow.status !== 'active') return null;
-  return user;
 };
 
 const normalizeIdentifierToEmail = (value) => {
@@ -61,7 +49,7 @@ const ensureUserRecords = async (user, metadata = {}) => {
   const { data: existingUserRow } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
 
   const { data: userRow, error: userError } = existingUserRow
-    ? await supabase.from('users').update({ name: userName, email: user.email, phone }).eq('id', user.id).select().single()
+    ? await supabase.from('users').update({ name: userName, email: user.email, phone, role: 'player', vip_level: 0, status: 'active' }).eq('id', user.id).select().single()
     : await supabase.from('users').insert({ id: user.id, name: userName, email: user.email, phone, role: 'player', vip_level: 0, status: 'active' }).select().single();
 
   if (userError) {
@@ -95,67 +83,89 @@ const ensureUserRecords = async (user, metadata = {}) => {
   };
 };
 
-const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:8000')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-app.use(cors({ origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins }));
-
-// Precisa vir antes do express.json() global: a assinatura é calculada sobre o corpo bruto.
-app.post('/webhooks/auraverta', express.raw({ type: 'application/json' }), async (req, res) => {
-  const signature = req.headers['x-auraverta-signature'];
-  const secret = process.env.AURAVERTA_WEBHOOK_SECRET;
-  const rawBody = req.body?.toString('utf8') || '';
-
-  if (!gatewayClient.verifyWebhookSignature(rawBody, signature, secret)) {
-    console.error('Webhook Aura Verta recusado: assinatura inválida.');
-    return res.status(401).json({ error: 'Assinatura inválida.' });
-  }
-
-  let event;
-  try {
-    event = JSON.parse(rawBody);
-  } catch {
-    return res.status(400).json({ error: 'Corpo inválido.' });
-  }
-
-  console.log(`Webhook Aura Verta recebido e assinatura válida: ${event.tipo} (${event.id})`);
-
-  // Responde rápido e processa depois, como recomendado na documentação do gateway.
-  res.status(200).json({ received: true });
-
-  try {
-    if (event.tipo === 'cobranca.estado_alterado') {
-      await reconcileDeposit({
-        supabase,
-        deposit: {
-          id: event.dados.cobranca.id,
-          status: event.dados.cobranca.estado,
-          externalReference: event.dados.cobranca.referenciaExterna
-        }
-      });
-    } else if (event.tipo === 'saque.estado_alterado') {
-      await reconcileWithdrawal({
-        supabase,
-        withdrawal: {
-          id: event.dados.saque.id,
-          status: event.dados.saque.estado,
-          externalReference: event.dados.saque.referenciaExterna
-        }
-      });
-    }
-  } catch (error) {
-    console.error('Falha ao processar webhook Aura Verta:', error.message);
-  }
-});
-
+app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {
   res.json({ ok: true, service: 'jogo-alex-backend', status: 'running' });
 });
 
-app.use('/payments', createPaymentsRouter({ supabase, getAuthenticatedUser }));
+const API_GAMES = {
+  'jade-cascade': JadeCascadeEngine,
+  'olympus-ascend': OlympusAscendEngine
+};
+
+const apiUser = async (req, res) => {
+  const user = await getAuthenticatedUser(req);
+  if (!user) {
+    res.status(401).json({ error: 'Token JWT inválido ou ausente.' });
+    return null;
+  }
+  await ensureUserRecords(user, { name: user.user_metadata?.name, phone: user.user_metadata?.phone });
+  return user;
+};
+
+// Supabase Auth signs the access_token as a JWT. No password or secret is
+// reimplemented by this API.
+app.post('/api/login', async (req, res) => {
+  const { email, phone, password } = req.body || {};
+  const resolvedEmail = normalizeIdentifierToEmail(email || phone);
+  if (!resolvedEmail || typeof password !== 'string' || password.length < 1) {
+    return res.status(400).json({ error: 'email/telefone e password são obrigatórios.' });
+  }
+  const { data, error } = await supabase.auth.signInWithPassword({ email: resolvedEmail, password });
+  if (error || !data.session || !data.user) return res.status(401).json({ error: 'Credenciais inválidas.' });
+  await ensureUserRecords(data.user);
+  return res.json({
+    token: data.session.access_token,
+    expires_at: data.session.expires_at,
+    user: { id: data.user.id, email: data.user.email }
+  });
+});
+
+app.get('/api/balance', async (req, res) => {
+  const user = await apiUser(req, res);
+  if (!user) return;
+  const { data: wallet, error } = await supabase.from('wallets')
+    .select('balance, currency, updated_at').eq('user_id', user.id).single();
+  if (error) return res.status(500).json({ error: 'Não foi possível obter o saldo.' });
+  return res.json({ balance: Number(wallet.balance), currency: wallet.currency, updated_at: wallet.updated_at });
+});
+
+app.post('/api/deposit', async (req, res) => {
+  const user = await apiUser(req, res);
+  if (!user) return;
+  const paymentReference = String(req.body?.payment_reference || '').trim();
+  if (!paymentReference) return res.status(400).json({ error: 'payment_reference é obrigatório.' });
+  const { data, error } = await supabase.rpc('credit_approved_deposit', {
+    p_user_id: user.id, p_provider_reference: paymentReference
+  });
+  if (error) return res.status(error.message.includes('NOT_APPROVED') ? 409 : 400).json({ error: error.message });
+  const settled = data?.[0];
+  return res.json({ ok: true, balance: Number(settled.new_balance), transaction_id: settled.transaction_id });
+});
+
+app.post('/api/spin', async (req, res) => {
+  const user = await apiUser(req, res);
+  if (!user) return;
+  const game = String(req.body?.game || 'jade-cascade');
+  const bet = Number(req.body?.bet);
+  if (!API_GAMES[game] || !Number.isFinite(bet) || bet < 0.1 || bet > 5000) {
+    return res.status(400).json({ error: 'Jogo ou aposta inválidos.' });
+  }
+  // Outcome and payout are generated here, never accepted from the browser.
+  const outcome = new API_GAMES[game]().spin(bet);
+  const { data, error } = await supabase.rpc('settle_slot_spin', {
+    p_user_id: user.id, p_stake: outcome.betAmount, p_payout: outcome.winAmount,
+    p_game: game, p_result: outcome
+  });
+  if (error) {
+    const status = error.message.includes('SPIN_RATE_LIMIT') ? 429 : error.message.includes('INSUFFICIENT_BALANCE') ? 409 : 400;
+    return res.status(status).json({ error: error.message });
+  }
+  const settled = data?.[0];
+  return res.json({ ok: true, outcome, balance: Number(settled.new_balance), transaction_id: settled.transaction_id });
+});
 
 app.post('/auth/register', async (req, res) => {
   const { email, phone, password, name } = req.body;
@@ -331,81 +341,33 @@ app.get('/games/catalog', async (req, res) => {
 });
 
 app.post('/games/fortune-tiger/spin', async (req, res) => {
-  const requestedBet = Number(req.body?.bet_amount);
-  const betAmount = Number.isFinite(requestedBet) && requestedBet > 0 ? requestedBet : 5;
-  const engine = new FortuneTigerEngine({ betAmount });
+  const { bet_amount } = req.body || {};
+  const engine = new FortuneTigerEngine({ betAmount: Number(bet_amount) || 5 });
   const result = engine.spin();
 
   const user = await getAuthenticatedUser(req);
-  let balance = null;
 
   if (user) {
     try {
-      const { data: wallet, error: walletError } = await supabase
-        .from('wallets')
-        .select('balance')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (walletError) throw walletError;
-
-      const currentBalance = Number(wallet?.balance || 0);
-      if (currentBalance < result.betAmount) {
-        return res.status(400).json({ error: 'Saldo insuficiente para esta aposta.' });
-      }
-
-      balance = Number((currentBalance - result.betAmount + result.winAmount).toFixed(2));
-
-      const { error: balanceError } = await supabase.from('wallets').upsert({
-        user_id: user.id,
-        balance,
-        currency: 'BRL',
-        status: 'active',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
-
-      if (balanceError) throw balanceError;
-
       const { data: sessionData, error: sessionError } = await supabase
         .from('game_sessions')
-        .insert({
-          user_id: user.id,
-          bet_amount: result.betAmount,
-          payout_amount: result.winAmount,
-          result_json: result,
-          status: 'completed'
-        })
+        .insert({ user_id: user.id, start_time: new Date().toISOString() })
         .select()
         .single();
 
-      if (sessionError) throw sessionError;
-
-      const { error: betError } = await supabase.from('bets').insert({
-        user_id: user.id,
-        stake: result.betAmount,
-        payout: result.winAmount,
-        result: result.isWin ? 'win' : 'loss',
-        metadata: {
-          game: 'fortune-tiger',
+      if (!sessionError && sessionData?.id) {
+        await supabase.from('bet_history').insert({
+          user_id: user.id,
           session_id: sessionData.id,
-          grid: result.grid,
-          feature_triggered: result.featureTriggered
-        }
-      });
-
-      if (betError) throw betError;
-
-      await supabase.from('transactions').insert({
-        user_id: user.id,
-        type: 'bet',
-        amount: result.betAmount,
-        status: 'completed',
-        reference: `fortune-tiger-${sessionData.id}`,
-        metadata: { payout: result.winAmount }
-      });
+          bet_amount: result.betAmount,
+          win_amount: result.winAmount,
+          grid_result_json: { grid: result.grid, symbols: result.symbols },
+          multiplier: result.multiplier,
+          is_feature_triggered: result.featureTriggered
+        });
+      }
     } catch (dbError) {
-      console.error('Falha ao registrar rodada do Fortune Tiger:', dbError.message);
-      return res.status(500).json({ error: 'Não foi possível registrar a rodada.' });
+      console.warn('Falha ao registrar sessão do Fortune Tiger:', dbError.message);
     }
   }
 
@@ -414,11 +376,32 @@ app.post('/games/fortune-tiger/spin', async (req, res) => {
     data: {
       ...result,
       game: 'fortune-tiger',
-      provider: 'proprietary',
-      balance
+      provider: 'proprietary'
     }
   });
 });
+
+const runProprietarySpin = (Engine, game) => async (req, res) => {
+  const { bet_amount } = req.body || {};
+  const result = new Engine().spin(bet_amount);
+  const user = await getAuthenticatedUser(req);
+
+  if (user) {
+    try {
+      const { data: session } = await supabase.from('game_sessions')
+        .insert({ user_id: user.id, start_time: new Date().toISOString() }).select().single();
+      if (session?.id) await supabase.from('bet_history').insert({
+        user_id: user.id, session_id: session.id, bet_amount: result.betAmount,
+        win_amount: result.winAmount, grid_result_json: { grid: result.grid, cascades: result.cascades, clusters: result.clusters },
+        multiplier: result.multiplier || 1, is_feature_triggered: result.featureTriggered
+      });
+    } catch (error) { console.warn(`Falha ao registrar ${game}:`, error.message); }
+  }
+  return res.json({ ok: true, data: { ...result, game, provider: 'proprietary', rng: 'server-side-crypto' } });
+};
+
+app.post('/games/jade-cascade/spin', runProprietarySpin(JadeCascadeEngine, 'jade-cascade'));
+app.post('/games/olympus-ascend/spin', runProprietarySpin(OlympusAscendEngine, 'olympus-ascend'));
 
 app.post('/games/play', async (req, res) => {
   const user = await getAuthenticatedUser(req);
@@ -428,7 +411,7 @@ app.post('/games/play', async (req, res) => {
     return res.status(401).json({ error: 'Token inválido ou ausente.' });
   }
 
-  if (!game_id || bet_amount === undefined || bet_amount === null) {
+  if (!game_id || !bet_amount) {
     return res.status(400).json({ error: 'game_id e bet_amount são obrigatórios.' });
   }
 
@@ -444,30 +427,17 @@ app.post('/games/play', async (req, res) => {
     }
 
     const stake = Number(bet_amount);
-    if (!Number.isFinite(stake) || stake <= 0) {
-      return res.status(400).json({ error: 'bet_amount deve ser maior que zero.' });
-    }
-
-    const currentBalance = Number(wallet?.balance || 0);
-    if (currentBalance < stake) {
-      return res.status(400).json({ error: 'Saldo insuficiente para esta aposta.' });
-    }
-
     const payout = stake * 1.7;
-    const nextBalance = Number((currentBalance - stake + payout).toFixed(2));
+    const nextBalance = Number(wallet?.balance || 0) - stake + payout;
 
-    const { error: balanceError } = await supabase.from('wallets').upsert({
+    await supabase.from('wallets').upsert({
       user_id: user.id,
       balance: nextBalance,
       currency: 'BRL',
       status: 'active'
     }, { onConflict: 'user_id' });
 
-    if (balanceError) {
-      return res.status(400).json({ error: balanceError.message });
-    }
-
-    const { error: betError } = await supabase.from('bets').insert({
+    await supabase.from('bets').insert({
       user_id: user.id,
       game_id,
       stake,
@@ -475,10 +445,6 @@ app.post('/games/play', async (req, res) => {
       result: 'win',
       metadata: { demo: true }
     });
-
-    if (betError) {
-      return res.status(400).json({ error: betError.message });
-    }
 
     return res.json({
       ok: true,
@@ -499,10 +465,10 @@ app.post('/games/play', async (req, res) => {
 });
 
 app.get('/admin/settings', async (req, res) => {
-  const user = await getAdminUser(req);
+  const user = await getAuthenticatedUser(req);
 
   if (!user) {
-    return res.status(403).json({ error: 'Acesso restrito ao administrador.' });
+    return res.status(401).json({ error: 'Token inválido ou ausente.' });
   }
 
   try {
@@ -522,40 +488,11 @@ app.get('/admin/settings', async (req, res) => {
   }
 });
 
-app.get('/admin/users', async (req, res) => {
-  const user = await getAdminUser(req);
-
-  if (!user) {
-    return res.status(403).json({ error: 'Acesso restrito ao administrador.' });
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, name, email, phone, role, status, vip_level, created_at, wallets(balance, currency, status)')
-      .order('created_at', { ascending: false })
-      .limit(100);
-
-    if (error) {
-      return res.status(400).json({ error: error.message });
-    }
-
-    const users = (data || []).map((row) => ({
-      ...row,
-      wallet: row.wallets?.[0] || { balance: 0, currency: 'BRL', status: 'active' }
-    }));
-
-    return res.json({ data: users });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
 app.put('/admin/settings', async (req, res) => {
-  const user = await getAdminUser(req);
+  const user = await getAuthenticatedUser(req);
 
   if (!user) {
-    return res.status(403).json({ error: 'Acesso restrito ao administrador.' });
+    return res.status(401).json({ error: 'Token inválido ou ausente.' });
   }
 
   const incoming = req.body || {};
@@ -591,6 +528,6 @@ app.put('/admin/settings', async (req, res) => {
   }
 });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Servidor rodando na porta ${port}`);
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
 });

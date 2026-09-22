@@ -42,7 +42,6 @@ Este projeto foi dividido em duas frentes:
 - `/wallet/deposit`
 - `/games/catalog`
 - `/games/play`
-- `/admin/users` (admin)
 - `/admin/settings`
 
 ### Banco
@@ -56,20 +55,11 @@ Este projeto foi dividido em duas frentes:
 - configurações admin
 - logs de auditoria
 
-## Execução local
+## Próximo passo
 
-1. Execute `supabase/schema.sql` no projeto Supabase.
-2. Configure `backend/.env` com `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `PORT`.
-3. Inicie a API com `cd backend` e `npm start`.
-4. Sirva a raiz do projeto em `http://localhost:8000` com um servidor HTTP estático.
-5. Confirme a API em `http://localhost:4000/health`.
-
-O arquivo `supabase/fortune_tiger_schema.sql` é somente uma migração complementar de índices. Ele não deve ser usado no lugar do schema principal.
-
-## Próximos passos
-
-1. configurar as políticas de produção do Supabase
-2. revisar e versionar regras de RTP por jogo com auditoria independente
-3. substituir depósitos fictícios por um gateway aprovado
-4. adicionar transações atômicas para débito e crédito da carteira
-5. criar testes de autenticação, carteira, painel admin e rodadas
+1. criar projeto no Supabase
+2. rodar `supabase/schema.sql`
+3. configurar `.env` no backend
+4. testar endpoints com o servidor local
+5. conectar frontend autenticado ao backend
+6. criar módulo de jogos próprios
