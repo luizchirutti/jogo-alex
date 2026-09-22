@@ -3,7 +3,9 @@ const validCredentials = {
   password: 'Teste123*'
 };
 
-const API_BASE = 'http://localhost:4000';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:4000'
+  : window.location.origin;
 let appSession = null;
 
 function normalizeIdentifierToEmail(value) {
@@ -495,8 +497,11 @@ document.querySelectorAll('.bet-option').forEach((button) => {
 
 startDemoGameButton.addEventListener('click', () => {
   if (!activeGame) return;
-  const separator = activeGame.url.includes('?') ? '&' : '?';
-  window.open(`http://localhost:8000/${activeGame.url}${separator}bet=${selectedDemoBet}`, '_blank');
+
+  const targetUrl = new URL(activeGame.url, window.location.href);
+  targetUrl.searchParams.set('bet', String(selectedDemoBet));
+
+  window.open(targetUrl.toString(), '_blank');
   gameOverlay.classList.remove('visible');
 });
 

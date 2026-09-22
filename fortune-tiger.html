@@ -180,8 +180,12 @@
         spinButton.disabled = true;
         spinButton.textContent = 'Girando...';
 
+        const apiBase = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+          ? 'http://localhost:4000'
+          : window.location.origin;
+
         try {
-          const response = await fetch('http://localhost:4000/api/spin', {
+          const response = await fetch(`${apiBase}/api/spin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ bet: currentBet })
